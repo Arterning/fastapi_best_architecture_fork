@@ -5,22 +5,14 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev)
 
-> [!CAUTION]
-> **For 2024-3-22 (announcement)**
->
-> The master branch has completed the app architecture refactoring, please pay extra attention to sync fork operations
-> to avoid irreparable damage!
->
-> We have kept and locked the original branch (legacy-single-app-pydantic-v2), which you can get in the branch selector
+> [!NOTE]
+> This repository as a template library open to any person or enterprise can be used for free!
 
 English | [简体中文](./README.zh-CN.md)
 
 FastAPI framework based on the front-end and back-end separation of the middle and back-end solutions, follow
 the [pseudo three-tier architecture](#pseudo-three-tier-architecture) design, support for **python3.10** and above
 versions
-
-Its purpose is to allow you to use it directly as the infrastructure of your new project, this repository as a template
-library open to any person or enterprise can be used for free!
 
 **🔥Continuously updated and maintained🔥**
 
@@ -70,117 +62,51 @@ Luckily, we now have a demo site: [FBA UI](https://fba.xwboy.top/)
 
 ## Built-in features
 
-1. [x] User management: system user role management, permission assignment
-2. [x] Department Management: Configure the system organization (company, department, group...)
-3. [x] Menu Management: Configuration of system menus, user menus, button privilege identification
-4. [x] Role Management: Assign role menu privileges, assign role routing privileges
-5. [x] Dictionary Management: Maintain common fixed data or parameters within the system.
-6. [x] Operation Logs: logging and querying of normal and abnormal system operations.
-7. [x] Login Authentication: graphical authentication code background authentication login
-8. [x] Login Logs: Logging and querying of normal and abnormal user logins
-9. [x] Service Monitoring: server hardware device information and status
-10. [x] Scheduled tasks: automated tasks, asynchronous tasks, and function invocation are supported
-11. [x] Interface Documentation: Automatically generate online interactive API interface documentation.
+- [x] User management: management of system user roles, assignment of permissions
+- [x] Departmental management: Configuration of the system organization (company, department, group, ...)
+- [x] Menu management: Configuration of system menus, user menus, button permission labels
+- [x] Role management: assignment of role menu privileges, assignment of role routing privileges
+- [x] Dictionary management: maintenance of commonly used fixed data or parameters within the system
+- [x] Code generation: back-end code is automatically generated, supporting preview, write and download.
+- [x] Operation log: logging and querying of normal and abnormal system operations.
+- [x] Login authentication: graphical captcha backend authentication login
+- [x] Logging: logging and querying of normal and abnormal user logins
+- [x] Service monitoring: server hardware device information and status
+- [x] Timed tasks: automated tasks, asynchronous tasks, support for function calls
+- [x] Interface Documentation: Automatically generate online interactive API interface documentation.
 
-## Local development
+## Project structure
 
-* Python: 3.10+
-* Mysql: 8.0+
-* Redis: The latest stable version is recommended
-* Nodejs: 14.0+
+```
+├─📁 backend--------------- # Backend
+│ ├─📁 alembic------------- # DB migration
+│ ├─📁 app----------------- # Application
+│ │ ├─📁 admin------------- # System admin
+│ │ │ ├─📁 api------------- # Interface
+│ │ │ ├─📁 crud------------ # CRUD
+│ │ │ ├─📁 model----------- # SQLA model
+│ │ │ ├─📁 schema---------- # Data transmit
+│ │ │ ├─📁 service--------- # Service
+│ │ │ └─📁 tests----------- # Pytest
+│ │ ├─📁 generator--------- # Code generate
+│ │ └─📁 task-------------- # Celery task
+│ ├─📁 common-------------- # public resources
+│ ├─📁 core---------------- # Core configuration
+│ ├─📁 database------------ # Database connection
+│ ├─📁 log----------------- # Log
+│ ├─📁 middleware---------- # Middlewares
+│ ├─📁 scripts------------- # Scripts
+│ ├─📁 sql----------------- # SQL files
+│ ├─📁 static-------------- # Static files
+│ ├─📁 templates----------- # Template files
+│ └─📁 utils--------------- # Toolkit
+└─📁 deploy---------------- # Server deployment
+```
 
-### Backend
+## Local development / Docker deployment
 
-1. Enter the `backend` directory
-
-   ```shell
-   cd backend
-   ```
-
-2. Install the dependencies
-
-   ```shell
-   pip install -r requirements.txt
-   ```
-
-3. Create a database `fba` with utf8mb4 encoding.
-4. Install and start Redis
-5. Create a `.env` file in the `backend` directory.
-
-   ```shell
-   touch .env
-   
-   cp .env.example .env
-   ```
-
-6. Modify the configuration files `core/conf.py` and `.env` as needed.
-7. database migration [alembic](https://alembic.sqlalchemy.org/en/latest/tutorial.html)
-
-   ```shell
-   # Generate the migration file
-   alembic revision --autogenerate
-   
-   # Execute the migration
-   alembic upgrade head
-   ```
-
-8. Start celery worker, beat and flower
-
-   ```shell
-   celery -A app.task.celery worker -l info
-   
-   # Scheduled tasks (optional)
-   celery -A app.task.celery beat -l info
-   
-   # Web monitor (optional)
-   celery -A app.task.celery flower --port=8555 --basic-auth=admin:123456
-   ```
-
-9. [Initialize test data](#test-data) (Optional)
-10. Start fastapi service
-   ```shell
-   # Help
-   fastapi --help
-   
-   # Dev mode
-   fastapi dev main.py
-   ```
-
-11. Open a browser and visit: http://127.0.0.1:8000/api/v1/docs
-
-### Front end
-
-Jump to [fastapi_best_architecture_ui](https://github.com/fastapi-practices/fastapi_best_architecture_ui) View details
-
----
-
-### Docker Deployment
-
-> [!WARNING]
->
-> Default port conflicts: 8000, 3306, 6379, 5672.
->
-> It is recommended to shut down local services: mysql, redis, rabbitmq... before deployment.
-
-1. Go to the `deploy/backend/docker-compose` directory, and create the environment variable file `.env`.
-
-   ```shell
-   cd deploy/backend/docker-compose
-   
-   touch .env.server ../../../backend/.env
-   
-   cp .env.server ../../../backend/.env
-   ```
-
-2. Modify the configuration files `backend/core/conf.py` and `.env` as needed.
-3. Execute the one-click startup command
-
-   ```shell
-   docker-compose up -d --build
-   ```
-
-4. Wait for the command to complete.
-5. Open a browser and visit: http://127.0.0.1:8000/api/v1/docs
+For more details, please check
+the [official documentation](https://fastapi-practices.github.io/fastapi_best_architecture_docs/)
 
 ## Test data
 
@@ -232,7 +158,7 @@ Execute unit tests through `pytest`.
 
 ## Interactivity
 
-[WeChat / QQ](https://github.com/wu-clan)
+[WeChat / QQ](https://wu-clan.github.io/homepage/)
 
 ## Sponsor us
 

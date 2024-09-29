@@ -7,7 +7,6 @@ from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.admin.crud.crud_login_log import login_log_dao
-from backend.app.admin.model import User
 from backend.app.admin.schema.login_log import CreateLoginLogParam
 from backend.common.log import log
 from backend.database.db_mysql import async_db_session
@@ -20,13 +19,19 @@ class LoginLogService:
 
     @staticmethod
     async def create(
-        *, db: AsyncSession, request: Request, user: User, login_time: datetime, status: int, msg: str
+        *,
+        db: AsyncSession,
+        request: Request,
+        user_uuid: str,
+        username: str,
+        login_time: datetime,
+        status: int,
+        msg: str,
     ) -> None:
         try:
-            # request.state 来自 opera log 中间件定义的扩展参数，详见 opera_log_middleware.py
             obj_in = CreateLoginLogParam(
-                user_uuid=user.uuid,
-                username=user.username,
+                user_uuid=user_uuid,
+                username=username,
                 status=status,
                 ip=request.state.ip,
                 country=request.state.country,
@@ -41,7 +46,7 @@ class LoginLogService:
             )
             await login_log_dao.create(db, obj_in)
         except Exception as e:
-            log.exception(f'登录日志创建失败: {e}')
+            log.error(f'登录日志创建失败: {e}')
 
     @staticmethod
     async def delete(*, pk: list[int]) -> int:

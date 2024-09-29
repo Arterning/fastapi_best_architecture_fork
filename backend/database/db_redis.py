@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from redis.asyncio.client import Redis
+from redis.asyncio import Redis
 from redis.exceptions import AuthenticationError, TimeoutError
 
 from backend.common.log import log
@@ -56,8 +56,8 @@ class RedisCli(Redis):
                     keys.append(key)
             else:
                 keys.append(key)
-        for key in keys:
-            await self.delete(key)
+        if keys:
+            await self.delete(*keys)
 
 
 # 创建 redis 客户端实例

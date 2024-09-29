@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from asgiref.sync import sync_to_async
 from fastapi import Depends, Request
 from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
-from jose import jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.admin.model import User
+from backend.common.dataclasses import AccessToken, NewToken, RefreshToken
 from backend.common.exception.errors import AuthorizationError, TokenError
 from backend.core.conf import settings
 from backend.database.db_redis import redis_client
@@ -23,7 +23,6 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 DependsJwtAuth = Depends(HTTPBearer())
 
 
-@sync_to_async
 def get_hash_password(password: str) -> str:
     """
     Encrypt passwords using the hash algorithm
@@ -34,7 +33,6 @@ def get_hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
-@sync_to_async
 def password_verify(plain_password: str, hashed_password: str) -> bool:
     """
     Password verification
@@ -46,82 +44,81 @@ def password_verify(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def create_access_token(sub: str, expires_delta: timedelta | None = None, **kwargs) -> tuple[str, datetime]:
+async def create_access_token(sub: str, multi_login: bool) -> AccessToken:
     """
     Generate encryption token
 
     :param sub: The subject/userid of the JWT
-    :param expires_delta: Increased expiry time
+    :param multi_login: multipoint login for user
     :return:
     """
-    if expires_delta:
-        expire = timezone.now() + expires_delta
-        expire_seconds = int(expires_delta.total_seconds())
-    else:
-        expire = timezone.now() + timedelta(seconds=settings.TOKEN_EXPIRE_SECONDS)
-        expire_seconds = settings.TOKEN_EXPIRE_SECONDS
-    multi_login = kwargs.pop('multi_login', None)
-    to_encode = {'exp': expire, 'sub': sub, **kwargs}
-    token = jwt.encode(to_encode, settings.TOKEN_SECRET_KEY, settings.TOKEN_ALGORITHM)
+    expire = timezone.now() + timedelta(seconds=settings.TOKEN_EXPIRE_SECONDS)
+    expire_seconds = settings.TOKEN_EXPIRE_SECONDS
+
+    to_encode = {'exp': expire, 'sub': sub}
+    access_token = jwt.encode(to_encode, settings.TOKEN_SECRET_KEY, settings.TOKEN_ALGORITHM)
+
     if multi_login is False:
-        prefix = f'{settings.TOKEN_REDIS_PREFIX}:{sub}:'
-        await redis_client.delete_prefix(prefix)
-    key = f'{settings.TOKEN_REDIS_PREFIX}:{sub}:{token}'
-    await redis_client.setex(key, expire_seconds, token)
-    return token, expire
+        key_prefix = f'{settings.TOKEN_REDIS_PREFIX}:{sub}'
+        await redis_client.delete_prefix(key_prefix)
+
+    key = f'{settings.TOKEN_REDIS_PREFIX}:{sub}:{access_token}'
+    await redis_client.setex(key, expire_seconds, access_token)
+    return AccessToken(access_token=access_token, access_token_expire_time=expire)
 
 
-async def create_refresh_token(sub: str, expire_time: datetime | None = None, **kwargs) -> tuple[str, datetime]:
+async def create_refresh_token(sub: str, multi_login: bool) -> RefreshToken:
     """
     Generate encryption refresh token, only used to create a new token
 
     :param sub: The subject/userid of the JWT
-    :param expire_time: expiry time
+    :param multi_login: multipoint login for user
     :return:
     """
-    if expire_time:
-        expire = expire_time + timedelta(seconds=settings.TOKEN_REFRESH_EXPIRE_SECONDS)
-        expire_datetime = timezone.f_datetime(expire_time)
-        current_datetime = timezone.now()
-        if expire_datetime < current_datetime:
-            raise TokenError(msg='Refresh Token 过期时间无效')
-        expire_seconds = int((expire_datetime - current_datetime).total_seconds())
-    else:
-        expire = timezone.now() + timedelta(seconds=settings.TOKEN_EXPIRE_SECONDS)
-        expire_seconds = settings.TOKEN_REFRESH_EXPIRE_SECONDS
-    multi_login = kwargs.pop('multi_login', None)
-    to_encode = {'exp': expire, 'sub': sub, **kwargs}
+    expire = timezone.now() + timedelta(seconds=settings.TOKEN_REFRESH_EXPIRE_SECONDS)
+    expire_seconds = settings.TOKEN_REFRESH_EXPIRE_SECONDS
+
+    to_encode = {'exp': expire, 'sub': sub}
     refresh_token = jwt.encode(to_encode, settings.TOKEN_SECRET_KEY, settings.TOKEN_ALGORITHM)
+
     if multi_login is False:
-        prefix = f'{settings.TOKEN_REFRESH_REDIS_PREFIX}:{sub}:'
-        await redis_client.delete_prefix(prefix)
+        key_prefix = f'{settings.TOKEN_REFRESH_REDIS_PREFIX}:{sub}'
+        await redis_client.delete_prefix(key_prefix)
+
     key = f'{settings.TOKEN_REFRESH_REDIS_PREFIX}:{sub}:{refresh_token}'
     await redis_client.setex(key, expire_seconds, refresh_token)
-    return refresh_token, expire
+    return RefreshToken(refresh_token=refresh_token, refresh_token_expire_time=expire)
 
 
-async def create_new_token(sub: str, token: str, refresh_token: str, **kwargs) -> tuple[str, str, datetime, datetime]:
+async def create_new_token(sub: str, token: str, refresh_token: str, multi_login: bool) -> NewToken:
     """
     Generate new token
 
     :param sub:
     :param token
     :param refresh_token:
+    :param multi_login:
     :return:
     """
     redis_refresh_token = await redis_client.get(f'{settings.TOKEN_REFRESH_REDIS_PREFIX}:{sub}:{refresh_token}')
     if not redis_refresh_token or redis_refresh_token != refresh_token:
         raise TokenError(msg='Refresh Token 已过期')
-    new_access_token, new_access_token_expire_time = await create_access_token(sub, **kwargs)
-    new_refresh_token, new_refresh_token_expire_time = await create_refresh_token(sub, **kwargs)
+
+    new_access_token = await create_access_token(sub, multi_login)
+    new_refresh_token = await create_refresh_token(sub, multi_login)
+
     token_key = f'{settings.TOKEN_REDIS_PREFIX}:{sub}:{token}'
-    refresh_token_key = f'{settings.TOKEN_REDIS_PREFIX}:{sub}:{refresh_token}'
+    refresh_token_key = f'{settings.TOKEN_REFRESH_REDIS_PREFIX}:{sub}:{refresh_token}'
     await redis_client.delete(token_key)
     await redis_client.delete(refresh_token_key)
-    return new_access_token, new_refresh_token, new_access_token_expire_time, new_refresh_token_expire_time
+    return NewToken(
+        new_access_token=new_access_token.access_token,
+        new_access_token_expire_time=new_access_token.access_token_expire_time,
+        new_refresh_token=new_refresh_token.refresh_token,
+        new_refresh_token_expire_time=new_refresh_token.refresh_token_expire_time,
+    )
 
 
-@sync_to_async
 def get_token(request: Request) -> str:
     """
     Get token for request header
@@ -135,7 +132,6 @@ def get_token(request: Request) -> str:
     return token
 
 
-@sync_to_async
 def jwt_decode(token: str) -> int:
     """
     Decode token
@@ -148,44 +144,43 @@ def jwt_decode(token: str) -> int:
         user_id = int(payload.get('sub'))
         if not user_id:
             raise TokenError(msg='Token 无效')
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise TokenError(msg='Token 已过期')
-    except (jwt.JWTError, Exception):
+    except (JWTError, Exception):
         raise TokenError(msg='Token 无效')
     return user_id
 
 
-async def jwt_authentication(token: str) -> dict[str, int]:
+async def jwt_authentication(token: str) -> int:
     """
     JWT authentication
 
     :param token:
     :return:
     """
-    user_id = await jwt_decode(token)
+    user_id = jwt_decode(token)
     key = f'{settings.TOKEN_REDIS_PREFIX}:{user_id}:{token}'
     token_verify = await redis_client.get(key)
     if not token_verify:
         raise TokenError(msg='Token 已过期')
-    return {'sub': user_id}
+    return user_id
 
 
-async def get_current_user(db: AsyncSession, data: dict) -> User:
+async def get_current_user(db: AsyncSession, pk: int) -> User:
     """
     Get the current user through token
 
     :param db:
-    :param data:
+    :param pk:
     :return:
     """
-    user_id = data.get('sub')
     from backend.app.admin.crud.crud_user import user_dao
 
-    user = await user_dao.get_with_relation(db, user_id=user_id)
+    user = await user_dao.get_with_relation(db, user_id=pk)
     if not user:
         raise TokenError(msg='Token 无效')
     if not user.status:
-        raise AuthorizationError(msg='用户已锁定')
+        raise AuthorizationError(msg='用户已被锁定，请联系系统管理员')
     if user.dept_id:
         if not user.dept.status:
             raise AuthorizationError(msg='用户所属部门已锁定')
@@ -198,7 +193,6 @@ async def get_current_user(db: AsyncSession, data: dict) -> User:
     return user
 
 
-@sync_to_async
 def superuser_verify(request: Request) -> bool:
     """
     Verify the current user permissions through token
@@ -206,9 +200,7 @@ def superuser_verify(request: Request) -> bool:
     :param request:
     :return:
     """
-    is_superuser = request.user.is_superuser
-    if not is_superuser:
-        raise AuthorizationError(msg='仅管理员有权操作')
-    if not request.user.is_staff:
-        raise AuthorizationError(msg='此管理员已被禁止后台管理操作')
-    return is_superuser
+    superuser = request.user.is_superuser
+    if not superuser or not request.user.is_staff:
+        raise AuthorizationError
+    return superuser

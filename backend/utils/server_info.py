@@ -51,13 +51,30 @@ class ServerInfo:
     @staticmethod
     def get_cpu_info() -> dict:
         """获取 CPU 信息"""
-        cpu_info = {'usage': round(psutil.cpu_percent(interval=1, percpu=False), 2)}  # %
+        cpu_info = {'usage': round(psutil.cpu_percent(percpu=False), 2)}  # %
 
-        # CPU 频率信息，最大、最小和当前频率
-        cpu_freq = psutil.cpu_freq()
-        cpu_info['max_freq'] = round(cpu_freq.max, 2)  # MHz
-        cpu_info['min_freq'] = round(cpu_freq.min, 2)  # MHz
-        cpu_info['current_freq'] = round(cpu_freq.current, 2)  # MHz
+        # 检查是否是 Apple M系列芯片
+        if platform.system() == 'Darwin' and 'arm' in platform.machine().lower():
+            cpu_info['max_freq'] = 0
+            cpu_info['min_freq'] = 0
+            cpu_info['current_freq'] = 0
+        else:
+            try:
+                # CPU 频率信息，最大、最小和当前频率
+                cpu_freq = psutil.cpu_freq()
+                cpu_info['max_freq'] = round(cpu_freq.max, 2)  # MHz
+                cpu_info['min_freq'] = round(cpu_freq.min, 2)  # MHz
+                cpu_info['current_freq'] = round(cpu_freq.current, 2)  # MHz
+            except FileNotFoundError:
+                # 处理无法获取频率的情况
+                cpu_info['max_freq'] = 0
+                cpu_info['min_freq'] = 0
+                cpu_info['current_freq'] = 0
+            except AttributeError:
+                # 处理属性不存在的情况（更安全的做法）
+                cpu_info['max_freq'] = 0
+                cpu_info['min_freq'] = 0
+                cpu_info['current_freq'] = 0
 
         # CPU 逻辑核心数，物理核心数
         cpu_info['logical_num'] = psutil.cpu_count(logical=True)
@@ -84,7 +101,12 @@ class ServerInfo:
                 ip = sk.getsockname()[0]
         except socket.gaierror:
             ip = '127.0.0.1'
-        return {'name': socket.gethostname(), 'ip': ip, 'os': platform.system(), 'arch': platform.machine()}
+        return {
+            'name': socket.gethostname(),
+            'ip': ip,
+            'os': platform.system(),
+            'arch': platform.machine(),
+        }
 
     @staticmethod
     def get_disk_info() -> List[dict]:

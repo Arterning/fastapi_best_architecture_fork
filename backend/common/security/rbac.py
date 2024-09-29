@@ -11,7 +11,6 @@ from backend.common.exception.errors import AuthorizationError, TokenError
 from backend.common.security.jwt import DependsJwtAuth
 from backend.core.conf import settings
 from backend.database.db_mysql import async_engine
-from backend.database.db_redis import redis_client
 
 
 class RBAC:
@@ -55,7 +54,7 @@ class RBAC:
         """
         path = request.url.path
         # 鉴权白名单
-        if path in settings.TOKEN_EXCLUDE:
+        if path in settings.TOKEN_REQUEST_PATH_EXCLUDE:
             return
         # JWT 授权状态强制校验
         if not request.auth.scopes:
@@ -78,49 +77,24 @@ class RBAC:
         if data_scope:
             return
         user_uuid = request.user.uuid
-        path_auth_perm = request.state.permission
         if settings.PERMISSION_MODE == 'role-menu':
             # 角色菜单权限校验
-            if path_auth_perm in set(settings.ROLE_MENU_EXCLUDE):
+            path_auth_perm = getattr(request.state, 'permission', None)
+            # 没有菜单权限标识不校验
+            if not path_auth_perm:
                 return
-            user_menu_perms = await redis_client.get(f'{settings.PERMISSION_REDIS_PREFIX}:{user_uuid}:enable')
-            user_forbid_menu_perms = await redis_client.get(f'{settings.PERMISSION_REDIS_PREFIX}:{user_uuid}:disable')
-            if not user_menu_perms or not user_forbid_menu_perms:
-                user_menu_perms = []
-                user_forbid_menu_perms = []
-                for role in user_roles:
-                    for menu in role.menus:
-                        if menu.status == StatusType.enable:
-                            user_menu_perms.extend(menu.perms.split(','))
-                        else:
-                            user_forbid_menu_perms.extend(menu.perms.split(','))
-                await redis_client.set(
-                    f'{settings.PERMISSION_REDIS_PREFIX}:{user_uuid}:enable', ','.join(user_menu_perms)
-                )
-                await redis_client.set(
-                    f'{settings.PERMISSION_REDIS_PREFIX}:{user_uuid}:disable', ','.join(user_forbid_menu_perms)
-                )
-            if path_auth_perm in user_forbid_menu_perms:
-                raise AuthorizationError(msg='菜单已禁用，授权失败')
-            if path_auth_perm not in user_menu_perms:
+            if path_auth_perm in set(settings.RBAC_ROLE_MENU_EXCLUDE):
+                return
+            allow_perms = []
+            for role in user_roles:
+                for menu in role.menus:
+                    if menu.status == StatusType.enable:
+                        allow_perms.extend(menu.perms.split(','))
+            if path_auth_perm not in allow_perms:
                 raise AuthorizationError
         else:
             # casbin 权限校验
-            user_forbid_menu_perms = await redis_client.get(
-                f'{settings.PERMISSION_REDIS_PREFIX}:{request.user.uuid}:disable'
-            )
-            if not user_forbid_menu_perms:
-                user_forbid_menu_perms = []
-                for role in user_roles:
-                    for menu in role.menus:
-                        if menu.status == StatusType.disable:
-                            user_forbid_menu_perms.extend(menu.perms.split(','))
-                await redis_client.set(
-                    f'{settings.PERMISSION_REDIS_PREFIX}:{user_uuid}:disable', ','.join(user_forbid_menu_perms)
-                )
-            if path_auth_perm in user_forbid_menu_perms:
-                raise AuthorizationError(msg='菜单已禁用，授权失败')
-            if (method, path) in settings.CASBIN_EXCLUDE:
+            if (method, path) in settings.RBAC_CASBIN_EXCLUDE:
                 return
             enforcer = await self.enforcer()
             if not enforcer.enforce(user_uuid, path, method):

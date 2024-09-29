@@ -20,12 +20,12 @@ router = APIRouter()
     ],
 )
 async def get_server_info() -> ResponseModel:
-    """IO密集型任务，使用线程池尽量减少性能损耗"""
     data = {
+        # 扔到线程池，避免阻塞
         'cpu': await run_in_threadpool(server_info.get_cpu_info),
         'mem': await run_in_threadpool(server_info.get_mem_info),
         'sys': await run_in_threadpool(server_info.get_sys_info),
         'disk': await run_in_threadpool(server_info.get_disk_info),
         'service': await run_in_threadpool(server_info.get_service_info),
     }
-    return await response_base.success(data=data)
+    return response_base.success(data=data)

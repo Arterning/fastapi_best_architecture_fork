@@ -31,7 +31,7 @@ class TaskSettings(BaseSettings):
 
     # Celery
     CELERY_BROKER: Literal['rabbitmq', 'redis'] = 'redis'
-    CELERY_BACKEND_REDIS_PREFIX: str = 'fba_celery'
+    CELERY_BACKEND_REDIS_PREFIX: str = 'fba:celery'
     CELERY_BACKEND_REDIS_TIMEOUT: float = 5.0
     CELERY_TASKS_PACKAGES: list[str] = [
         'app.task.celery_task',
@@ -54,6 +54,7 @@ class TaskSettings(BaseSettings):
     }
 
     @model_validator(mode='before')
+    @classmethod
     def validate_celery_broker(cls, values):
         if values['ENVIRONMENT'] == 'pro':
             values['CELERY_BROKER'] = 'rabbitmq'
