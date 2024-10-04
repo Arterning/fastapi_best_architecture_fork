@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 from backend.app.admin.tests.utils.db_mysql import override_get_db
 from backend.app.admin.tests.utils.get_headers import get_token_headers
-from backend.database.db_mysql import get_db
+from backend.database.db_pg import get_db
 from backend.main import app
 
 app.dependency_overrides[get_db] = override_get_db

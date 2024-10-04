@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from backend.app.admin.model.sys_user_role import sys_user_role
 from backend.common.model import Base, id_key
-from backend.database.db_mysql import uuid4_str
+from backend.database.db_pg import uuid4_str
 from backend.utils.timezone import timezone
 
 

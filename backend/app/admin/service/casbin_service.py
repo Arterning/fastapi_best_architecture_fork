@@ -15,7 +15,7 @@ from backend.app.admin.schema.casbin_rule import (
 )
 from backend.common.exception import errors
 from backend.common.security.rbac import rbac
-from backend.database.db_mysql import async_db_session
+from backend.database.db_pg import async_db_session
 
 
 class CasbinService:

@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     MYSQL_USER: str
     MYSQL_PASSWORD: str
 
+    # Env Postgres
+    PG_HOST: str
+    PG_PORT: int
+    PG_USER: str
+    PG_PASSWORD: str
+    PG_DATABASE: str
+
     # Env Redis
     REDIS_HOST: str
     REDIS_PORT: int

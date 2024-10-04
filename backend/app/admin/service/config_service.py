@@ -5,7 +5,7 @@ from backend.app.admin.crud.crud_config import config_dao
 from backend.app.admin.model import Config
 from backend.app.admin.schema.config import CreateConfigParam, UpdateConfigParam
 from backend.common.exception import errors
-from backend.database.db_mysql import async_db_session
+from backend.database.db_pg import async_db_session
 from backend.database.db_redis import redis_client
 from backend.utils.serializers import select_as_dict
 

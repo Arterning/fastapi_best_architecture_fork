@@ -11,7 +11,7 @@ from backend.app.admin.model import Role
 from backend.app.admin.schema.role import CreateRoleParam, UpdateRoleMenuParam, UpdateRoleParam
 from backend.common.exception import errors
 from backend.core.conf import settings
-from backend.database.db_mysql import async_db_session
+from backend.database.db_pg import async_db_session
 from backend.database.db_redis import redis_client
 
 

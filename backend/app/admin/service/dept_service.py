@@ -6,7 +6,7 @@ from backend.app.admin.crud.crud_dept import dept_dao
 from backend.app.admin.model import Dept
 from backend.app.admin.schema.dept import CreateDeptParam, UpdateDeptParam
 from backend.common.exception import errors
-from backend.database.db_mysql import async_db_session
+from backend.database.db_pg import async_db_session
 from backend.utils.build_tree import get_tree_data
 
 
