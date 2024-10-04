@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import String
-from sqlalchemy.dialects.mysql import JSON, LONGTEXT
+from sqlalchemy.dialects.postgresql import TEXT, JSON, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.common.model import DataClassBase, id_key
@@ -32,7 +32,7 @@ class OperaLog(DataClassBase):
     args: Mapped[str | None] = mapped_column(JSON(), comment='请求参数')
     status: Mapped[int] = mapped_column(comment='操作状态（0异常 1正常）')
     code: Mapped[str] = mapped_column(String(20), insert_default='200', comment='操作状态码')
-    msg: Mapped[str | None] = mapped_column(LONGTEXT, comment='提示消息')
+    msg: Mapped[str | None] = mapped_column(TEXT, comment='提示消息')
     cost_time: Mapped[float] = mapped_column(insert_default=0.0, comment='请求耗时（ms）')
-    opera_time: Mapped[datetime] = mapped_column(comment='操作时间')
-    created_time: Mapped[datetime] = mapped_column(init=False, default_factory=timezone.now, comment='创建时间')
+    opera_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), comment='操作时间')
+    created_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), init=False, default_factory=timezone.now, comment='创建时间')

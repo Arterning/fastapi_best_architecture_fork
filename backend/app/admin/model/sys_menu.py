@@ -3,7 +3,7 @@
 from typing import Union
 
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.dialects.mysql import LONGTEXT
+from sqlalchemy.dialects.postgresql import TEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.admin.model.sys_role_menu import sys_role_menu
@@ -28,7 +28,7 @@ class Menu(Base):
     status: Mapped[int] = mapped_column(default=1, comment='菜单状态（0停用 1正常）')
     show: Mapped[int] = mapped_column(default=1, comment='是否显示（0否 1是）')
     cache: Mapped[int] = mapped_column(default=1, comment='是否缓存（0否 1是）')
-    remark: Mapped[str | None] = mapped_column(LONGTEXT, default=None, comment='备注')
+    remark: Mapped[str | None] = mapped_column(TEXT, default=None, comment='备注')
     # 父级菜单一对多
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey('sys_menu.id', ondelete='SET NULL'), default=None, index=True, comment='父菜单ID'

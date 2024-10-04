@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, declared_attr, mapped_column
-
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from backend.utils.timezone import timezone
 
 # 通用 Mapped 类型主键, 需手动添加，参考以下使用方式
@@ -27,10 +27,10 @@ class DateTimeMixin(MappedAsDataclass):
     """日期时间 Mixin 数据类"""
 
     created_time: Mapped[datetime] = mapped_column(
-        init=False, default_factory=timezone.now, sort_order=999, comment='创建时间'
+        TIMESTAMP(timezone=True), init=False, default_factory=timezone.now, sort_order=999, comment='创建时间'
     )
     updated_time: Mapped[datetime | None] = mapped_column(
-        init=False, onupdate=timezone.now, sort_order=999, comment='更新时间'
+        TIMESTAMP(timezone=True), init=False, onupdate=timezone.now, sort_order=999, comment='更新时间'
     )
 
 
