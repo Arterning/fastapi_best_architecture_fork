@@ -11,6 +11,7 @@ from backend.app.admin.api.v1.sys.dict_type import router as dict_type_router
 from backend.app.admin.api.v1.sys.menu import router as menu_router
 from backend.app.admin.api.v1.sys.role import router as role_router
 from backend.app.admin.api.v1.sys.user import router as user_router
+from backend.app.admin.api.v1.sys.doc import router as doc_router
 
 router = APIRouter(prefix='/sys')
 
@@ -23,3 +24,4 @@ router.include_router(dict_type_router, prefix='/dict_types', tags=['系统字�
 router.include_router(menu_router, prefix='/menus', tags=['系统目录'])
 router.include_router(role_router, prefix='/roles', tags=['系统角色'])
 router.include_router(user_router, prefix='/users', tags=['系统用户'])
+router.include_router(doc_router, prefix='/docs', tags=['系统文件'])
