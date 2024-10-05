@@ -59,3 +59,8 @@ VALUES (1, 'af4c804f-3966-4949-ace2-3bb7416ea926', 'admin', '用户88888', '$2b$
 
 INSERT INTO sys_user_role (id, user_id, role_id)
 VALUES (1, 1, 1);
+
+
+
+insert into public.sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) values (44, '文件管理', 'Doc', 0, 0, 'IconFile', 'doc', 1, '/data/doc/index.vue', null, 1, 1, 1, null, 43, '2024-10-05 08:22:03.277761 +00:00', null);
+insert into public.sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) values (43, '数据', 'data', 0, 1, 'IconApps', 'data', 0, null, null, 1, 1, 1, null, null, '2024-10-05 08:20:22.158815 +00:00', '2024-10-05 08:23:38.257065 +00:00');
