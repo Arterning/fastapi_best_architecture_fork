@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 from typing import Sequence
 
-from sqlalchemy import delete, Select
+from sqlalchemy import select, Select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy_crud_plus import CRUDPlus
 
 from backend.app.admin.model import SysDoc
@@ -19,7 +20,13 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         :param pk:
         :return:
         """
-        return await self.select_model(db, pk)
+        where = [self.model.id == pk]
+        doc = await db.execute(
+            select(self.model)
+            .options(selectinload(self.model.doc_data))
+            .where(*where)
+        )
+        return doc.scalars().first()
 
     async def get_list(self, name: str = None) -> Select:
         """
@@ -40,7 +47,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         """
         return await self.select_models(db)
 
-    async def create(self, db: AsyncSession, obj_in: CreateSysDocParam) -> None:
+    async def create(self, db: AsyncSession, obj_in: CreateSysDocParam) -> SysDoc:
         """
         创建 SysDoc
 
@@ -48,7 +55,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         :param obj_in:
         :return:
         """
-        await self.create_model(db, obj_in)
+        return await self.create_model(db, obj_in)
 
     async def update(self, db: AsyncSession, pk: int, obj_in: UpdateSysDocParam) -> int:
         """

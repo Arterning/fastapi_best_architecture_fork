@@ -5,10 +5,13 @@ from typing import Sequence
 from sqlalchemy import Select
 
 from backend.app.admin.crud.crud_doc import sys_doc_dao
+from backend.app.admin.crud.crud_doc_data import sys_doc_data_dao
 from backend.app.admin.model import SysDoc
+from backend.app.admin.model import SysDocData
 from backend.app.admin.schema.doc import CreateSysDocParam, UpdateSysDocParam
 from backend.common.exception import errors
 from backend.database.db_pg import async_db_session
+from backend.app.admin.schema.doc_data import CreateSysDocDataParam
 
 
 class SysDocService:
@@ -31,12 +34,17 @@ class SysDocService:
             return sys_docs
 
     @staticmethod
-    async def create(*, obj: CreateSysDocParam) -> None:
+    async def create(*, obj: CreateSysDocParam) -> SysDoc:
         async with async_db_session.begin() as db:
             # sys_doc = await sys_doc_dao.get_by_name(db, obj.name)
             # if sys_doc:
             #     raise errors.ForbiddenError(msg='文件已存在')
-            await sys_doc_dao.create(db, obj)
+            return await sys_doc_dao.create(db, obj)
+
+    @staticmethod
+    async def create_doc_data(*, obj: CreateSysDocDataParam) -> SysDocData:
+        async with async_db_session.begin() as db:
+            return await sys_doc_data_dao.create(db, obj)
 
     @staticmethod
     async def update(*, pk: int, obj: UpdateSysDocParam) -> int:

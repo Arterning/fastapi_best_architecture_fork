@@ -3,7 +3,7 @@
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import TEXT
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.common.model import Base, id_key
 
@@ -20,3 +20,5 @@ class SysDoc(Base):
     content: Mapped[str | None] = mapped_column(TEXT, default=None, comment='文件内容')
     desc: Mapped[str | None] = mapped_column(TEXT, default=None, comment='摘要')
     file: Mapped[str | None] = mapped_column(TEXT, default=None, comment='原文')
+
+    doc_data: Mapped[list['SysDocData']] = relationship(init=False, back_populates='doc')

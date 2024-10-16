@@ -29,3 +29,12 @@ class GetSysDocListDetails(SysDocSchemaBase):
     id: int
     created_time: datetime
     updated_time: datetime | None = None
+
+
+class GetDocDetail(SysDocSchemaBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    created_time: datetime
+    updated_time: datetime | None = None
+    doc_data: list[dict]

@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query
 
-from backend.app.admin.schema.doc import CreateSysDocParam, GetSysDocListDetails, UpdateSysDocParam
+from backend.app.admin.schema.doc import CreateSysDocParam, GetSysDocListDetails, UpdateSysDocParam, GetDocDetail
 from backend.app.admin.service.doc_service import sys_doc_service
 from backend.common.pagination import DependsPagination, paging_data
 from backend.common.response.response_schema import ResponseModel, response_base
@@ -12,14 +12,22 @@ from backend.common.security.jwt import DependsJwtAuth
 from backend.common.security.permission import RequestPermission
 from backend.common.security.rbac import DependsRBAC
 from backend.database.db_pg import CurrentSession
+from backend.utils.serializers import select_as_dict
 
 router = APIRouter()
 
 
 @router.get('/{pk}', summary='获取文件详情', dependencies=[DependsJwtAuth])
 async def get_sys_doc(pk: Annotated[int, Path(...)]) -> ResponseModel:
-    sys_doc = await sys_doc_service.get(pk=pk)
-    return response_base.success(data=sys_doc)
+    doc = await sys_doc_service.get(pk=pk)
+    doc_data = []
+    for data in doc.doc_data:
+        doc_data.append(data.excel_data)
+    data = GetDocDetail(id=doc.id, title=doc.title, name=doc.name,
+                        content=doc.content, created_time=doc.created_time,
+                        updated_time=doc.updated_time,
+                        type=doc.type, doc_data=doc_data)
+    return response_base.success(data=data)
 
 
 @router.get(
