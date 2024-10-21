@@ -12,7 +12,7 @@ from backend.app.router import route
 from backend.common.exception.exception_handler import register_exception
 from backend.common.log import set_customize_logfile, setup_logging
 from backend.core.conf import settings
-from backend.core.path_conf import STATIC_DIR
+from backend.core.path_conf import STATIC_DIR, UPLOAD_DIR
 from backend.database.db_pg import create_table
 from backend.database.db_redis import redis_client
 from backend.middleware.jwt_auth_middleware import JwtAuthMiddleware
@@ -107,7 +107,7 @@ def register_static_file(app: FastAPI):
         if not os.path.exists(STATIC_DIR):
             os.mkdir(STATIC_DIR)
         app.mount('/static', StaticFiles(directory=STATIC_DIR), name='static')
-
+        app.mount('/uploads', StaticFiles(directory=UPLOAD_DIR), name='uploads')
 
 def register_middleware(app: FastAPI):
     """

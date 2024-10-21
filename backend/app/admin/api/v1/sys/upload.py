@@ -62,6 +62,11 @@ def is_code_file(filename: str) -> bool:
 def is_email_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.eml']
 
+def get_filename(file_path: str):
+    return os.path.basename(file_path)
+
+def get_file_title(file_name: str):
+    return os.path.splitext(file_name)[0]
 
 
 @router.post("/", summary='上传文件', dependencies=[DependsJwtAuth])
@@ -81,7 +86,7 @@ async def upload_file(file: UploadFile = File(...)):
     elif is_pdf_file(file.filename):
         await read_pdf(file)
     else:
-        await normal_read(file, get_file_extension(file.filename))
+        await normal_read(file, "text")
 
     resp = {"filename": file.filename}
     return response_base.success(data=resp)
@@ -89,14 +94,18 @@ async def upload_file(file: UploadFile = File(...)):
 
 async def normal_read(file: UploadFile, type: str):
     file_location = await save_file(file)
-    obj: CreateSysDocParam = CreateSysDocParam(title=file.filename, name=file.filename, type=type,
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type=type,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
 
 
 async def read_pdf(file: UploadFile = File(...)):
     file_location = await save_file(file)
-    obj: CreateSysDocParam = CreateSysDocParam(title=file.filename, name=file.filename, type="pdf",
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
 
@@ -120,7 +129,9 @@ async def read_excel(file: UploadFile = File(...)):
     file_location = await save_file(file)
 
     # 将数据存入数据库
-    doc_param = CreateSysDocParam(title=file.filename, name=file.filename, type='excel', file=file_location)
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    doc_param = CreateSysDocParam(title=title, name=name, type='excel', file=file_location)
     doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
         param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data)
@@ -131,6 +142,10 @@ async def read_excel(file: UploadFile = File(...)):
 async def save_file(file: UploadFile = File(...)):
     # 构建文件保存路径
     file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
+
+    # 提取目录部分并创建目录（如果不存在）
+    directory = os.path.dirname(file_location)
+    os.makedirs(directory, exist_ok=True)
 
     # 将上传的文件保存到指定目录
     with open(file_location, "wb") as f:

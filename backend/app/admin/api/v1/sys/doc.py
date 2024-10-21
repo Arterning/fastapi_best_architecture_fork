@@ -23,7 +23,7 @@ async def get_sys_doc(pk: Annotated[int, Path(...)]) -> ResponseModel:
     doc_data = []
     for data in doc.doc_data:
         doc_data.append(data.excel_data)
-    data = GetDocDetail(id=doc.id, title=doc.title, name=doc.name,
+    data = GetDocDetail(id=doc.id, title=doc.title, name=doc.name, file=doc.file,
                         content=doc.content, created_time=doc.created_time,
                         updated_time=doc.updated_time,
                         type=doc.type, doc_data=doc_data)
