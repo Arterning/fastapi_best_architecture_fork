@@ -24,8 +24,8 @@ class SysDocService:
             return sys_doc
 
     @staticmethod
-    async def get_select(*, name: str = None) -> Select:
-        return await sys_doc_dao.get_list(name=name)
+    async def get_select(*, name: str = None, type: str = None) -> Select:
+        return await sys_doc_dao.get_list(name=name, type=type)
 
     @staticmethod
     async def get_all() -> Sequence[SysDoc]:

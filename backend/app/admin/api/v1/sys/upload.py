@@ -44,26 +44,62 @@ def is_excel_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.xls', '.xlsx']
 
 
+def is_pdf_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.pdf']
+
+def is_picture_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.jpeg', '.jpg', '.png']
+
+def is_media_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.mp4', '.mp3', '.flv']
+
+def is_text_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.txt', '.host', '.config']
+
+def is_code_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.c', '.cpp', '.java', '.py', 'js', '.ts', '.rb', '.go']
+
+def is_email_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.eml']
+
+
+
 @router.post("/", summary='上传文件', dependencies=[DependsJwtAuth])
 async def upload_file(file: UploadFile = File(...)):
-    # 构建文件保存路径
-    file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
-
-    # 将上传的文件保存到指定目录
-    with open(file_location, "wb") as f:
-        content = await file.read()
-        f.write(content)
-
     if is_excel_file(file.filename):
         await read_excel(file)
+    elif is_picture_file(file.filename):
+        await normal_read(file, "picture")
+    elif is_media_file(file.filename):
+        await normal_read(file, "media")
+    elif is_text_file(file.filename):
+        await normal_read(file, "text")
+    elif is_code_file(file.filename):
+        await normal_read(file, "code")
+    elif is_email_file(file.filename):
+        await normal_read(file, 'email')
+    elif is_pdf_file(file.filename):
+        await read_pdf(file)
     else:
-        file_type = get_file_extension(file.filename)
-        obj: CreateSysDocParam = CreateSysDocParam(title=file.filename, name=file.filename, type=file_type,
-                                                   file=file_location)
-        await sys_doc_service.create(obj=obj)
+        await normal_read(file, get_file_extension(file.filename))
 
-    resp = {"filename": file.filename, "location": file_location}
+    resp = {"filename": file.filename}
     return response_base.success(data=resp)
+
+
+async def normal_read(file: UploadFile, type: str):
+    file_location = await save_file(file)
+    obj: CreateSysDocParam = CreateSysDocParam(title=file.filename, name=file.filename, type=type,
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
+
+
+async def read_pdf(file: UploadFile = File(...)):
+    file_location = await save_file(file)
+    obj: CreateSysDocParam = CreateSysDocParam(title=file.filename, name=file.filename, type="pdf",
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
+
 
 
 async def read_excel(file: UploadFile = File(...)):
@@ -80,10 +116,25 @@ async def read_excel(file: UploadFile = File(...)):
     # 将 DataFrame 转换为 JSON 格式
     data_json = df.to_dict(orient="records")
 
+    # 构建文件保存路径
+    file_location = await save_file(file)
+
     # 将数据存入数据库
-    doc_param = CreateSysDocParam(title=file.filename, name=file.filename, type='excel')
+    doc_param = CreateSysDocParam(title=file.filename, name=file.filename, type='excel', file=file_location)
     doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
         param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data)
         await sys_doc_service.create_doc_data(obj=param)
     return response_base.success(data=doc.id)
+
+
+async def save_file(file: UploadFile = File(...)):
+    # 构建文件保存路径
+    file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
+
+    # 将上传的文件保存到指定目录
+    with open(file_location, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    
+    return file_location

@@ -28,7 +28,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         )
         return doc.scalars().first()
 
-    async def get_list(self, name: str = None) -> Select:
+    async def get_list(self, name: str = None, type: str = None) -> Select:
         """
         获取 SysDoc 列表
         :return:
@@ -36,6 +36,8 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         filters = {}
         if name is not None:
             filters.update(name__like=f'%{name}%')
+        if type is not None:
+            filters.update(type=type)
         return await self.select_order('created_time', 'desc', **filters)
 
     async def get_all(self, db: AsyncSession) -> Sequence[SysDoc]:

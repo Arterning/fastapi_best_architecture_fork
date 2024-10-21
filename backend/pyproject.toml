@@ -50,6 +50,9 @@ dependencies = [
     # https://github.com/celery/celery/issues/7874
     "celery-aio-pool==0.1.0rc6",
     "asgi-correlation-id>=4.3.3",
+    "asyncpg>=0.30.0",
+    "pandas>=2.2.3",
+    "xlrd>=2.0.1",
 ]
 requires-python = ">=3.10,<3.13"
 readme = "README.md"

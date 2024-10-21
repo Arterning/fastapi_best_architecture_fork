@@ -10,3 +10,4 @@ static/media/
 .pytest_cache/
 .pdm-python
 celerybeat-schedule.*
+uploads
