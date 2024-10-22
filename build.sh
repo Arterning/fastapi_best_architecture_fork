@@ -1,0 +1,1 @@
+docker build -f backend/backend.dockerfile -t fba_server .
