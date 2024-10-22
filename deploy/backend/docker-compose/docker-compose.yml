@@ -10,6 +10,8 @@ networks:
         - subnet: 172.10.10.0/24
 
 volumes:
+  fba_pg:
+    name: fba_pg
   fba_mysql:
     name: fba_mysql
   fba_redis:
@@ -28,7 +30,7 @@ services:
     container_name: fba_server
     restart: always
     depends_on:
-      - fba_mysql
+      - fba_pg
       - fba_redis
       - fba_celery
     volumes:
@@ -39,30 +41,45 @@ services:
       - bash
       - -c
       - |
-        wait-for-it -s fba_mysql:3306 -s fba_redis:6379 -t 300
+        wait-for-it -s fba_pg:3306 -s fba_redis:6379 -t 300
         mkdir -p /var/log/supervisor/
         supervisord -c /fba/deploy/backend/supervisor.conf
         supervisorctl restart fastapi_server
 
-  fba_mysql:
-    image: mysql:8.0.29
+  fba_pg:
+    image: postgres:12
     ports:
-      - "${DOCKER_MYSQL_MAP_PORT:-3306}:3306"
-    container_name: fba_mysql
+      - "5432:5432"
     restart: always
-    environment:
-      MYSQL_DATABASE: fba
-      MYSQL_ROOT_PASSWORD: 123456
-      TZ: Asia/Shanghai
     volumes:
-      - fba_mysql:/var/lib/mysql
+      - fba_pg:/var/lib/postgresql/data/pgdata
     networks:
       - fba_network
-    command:
-      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_general_ci
-      --lower_case_table_names=1
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=changethis
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=fba
+
+  # fba_mysql:
+  #   image: mysql:8.0.29
+  #   ports:
+  #     - "${DOCKER_MYSQL_MAP_PORT:-3306}:3306"
+  #   container_name: fba_mysql
+  #   restart: always
+  #   environment:
+  #     MYSQL_DATABASE: fba
+  #     MYSQL_ROOT_PASSWORD: 123456
+  #     TZ: Asia/Shanghai
+  #   volumes:
+  #     - fba_mysql:/var/lib/mysql
+  #   networks:
+  #     - fba_network
+  #   command:
+  #     --default-authentication-plugin=mysql_native_password
+  #     --character-set-server=utf8mb4
+  #     --collation-server=utf8mb4_general_ci
+  #     --lower_case_table_names=1
 
   fba_redis:
     image: redis:6.2.7
