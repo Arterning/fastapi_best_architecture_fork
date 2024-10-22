@@ -7,12 +7,13 @@ from backend.app.admin.schema.doc_data import CreateSysDocDataParam
 from backend.app.admin.service.doc_service import sys_doc_service
 from backend.common.response.response_schema import response_base
 from backend.common.security.jwt import DependsJwtAuth
+from backend.utils.doc_utils import post_pdf_recog
 import os
 from fastapi import File, UploadFile
 from pathlib import Path
 import pandas as pd
 import numpy as np
-
+import asyncio
 
 
 router = APIRouter()
@@ -108,6 +109,11 @@ async def read_pdf(file: UploadFile = File(...)):
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
+    base = '~/'
+    path = base + file_location
+    loop = asyncio.get_running_loop()
+    pdf_records = await loop.run_in_executor(None, post_pdf_recog, path, f"{base}result/", "zhen_light")
+    print(pdf_records[0].content)
 
 
 
