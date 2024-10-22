@@ -27,6 +27,8 @@ services:
       context: ../../../
       dockerfile: backend/backend.dockerfile
     image: fba_server:latest
+    ports:
+      - "8001:8001"
     container_name: fba_server
     restart: always
     depends_on:
@@ -35,13 +37,14 @@ services:
       - fba_celery
     volumes:
       - fba_static:/fba/backend/app/static
+      - ./uploads:/fba/backend/app/uploads
     networks:
       - fba_network
     command:
       - bash
       - -c
       - |
-        wait-for-it -s fba_pg:3306 -s fba_redis:6379 -t 300
+        wait-for-it -s fba_pg:5432 -s fba_redis:6379 -t 300
         mkdir -p /var/log/supervisor/
         supervisord -c /fba/deploy/backend/supervisor.conf
         supervisorctl restart fastapi_server
