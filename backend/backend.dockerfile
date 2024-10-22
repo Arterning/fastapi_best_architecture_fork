@@ -21,6 +21,8 @@ RUN mkdir -p /var/log/fastapi_server
 
 COPY deploy/backend/fastapi_server.conf /etc/supervisor/conf.d/
 
+RUN mv backend/.env.docker /backend/.env
+
 EXPOSE 8001
 
 CMD ["uvicorn", "backend.main:app", "--host", "127.0.0.1", "--port", "8000"]

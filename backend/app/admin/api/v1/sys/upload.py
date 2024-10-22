@@ -109,10 +109,9 @@ async def read_pdf(file: UploadFile = File(...)):
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
-    base = '~/'
-    path = base + file_location
+    path = f"~/{file_location}"
     loop = asyncio.get_running_loop()
-    pdf_records = await loop.run_in_executor(None, post_pdf_recog, path, f"{base}result/", "zhen_light")
+    pdf_records = await loop.run_in_executor(None, post_pdf_recog, path, "~/uploads/result/", "zhen_light")
     print(pdf_records[0].content)
 
 
