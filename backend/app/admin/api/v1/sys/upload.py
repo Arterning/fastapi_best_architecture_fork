@@ -7,13 +7,14 @@ from backend.app.admin.schema.doc_data import CreateSysDocDataParam
 from backend.app.admin.service.doc_service import sys_doc_service
 from backend.common.response.response_schema import response_base
 from backend.common.security.jwt import DependsJwtAuth
-from backend.utils.doc_utils import post_pdf_recog
+from backend.utils.doc_utils import post_pdf_recog, post_imagesocr_recog, post_audios_recog
 import os
 from fastapi import File, UploadFile
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import asyncio
+from backend.common.log import log
 
 
 router = APIRouter()
@@ -26,22 +27,10 @@ Path(UPLOAD_DIRECTORY).mkdir(parents=True, exist_ok=True)
 
 
 def get_file_extension(filename: str) -> str:
-    """
-    获取文件的后缀名。
-
-    :param filename: 文件名字符串
-    :return: 文件后缀名（包含 . 号），如 .txt 或 .xlsx
-    """
     return os.path.splitext(filename)[1][1:]
 
 
 def is_excel_file(filename: str) -> bool:
-    """
-    判断文件是否为 Excel 文件（根据后缀名）。
-
-    :param filename: 文件名字符串
-    :return: 如果是 Excel 文件返回 True，否则返回 False
-    """
     return Path(filename).suffix.lower() in ['.xls', '.xlsx']
 
 
@@ -52,13 +41,11 @@ def is_picture_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.jpeg', '.jpg', '.png']
 
 def is_media_file(filename: str) -> bool:
-    return Path(filename).suffix.lower() in ['.mp4', '.mp3', '.flv']
+    return Path(filename).suffix.lower() in ['.mp4', '.mp3', '.flv', '.wav']
 
 def is_text_file(filename: str) -> bool:
-    return Path(filename).suffix.lower() in ['.txt', '.host', '.config']
-
-def is_code_file(filename: str) -> bool:
-    return Path(filename).suffix.lower() in ['.c', '.cpp', '.java', '.py', 'js', '.ts', '.rb', '.go']
+    return Path(filename).suffix.lower() in ['.txt', '.host', '.config',
+                                             '.c', '.cpp', '.java', '.py', 'js', '.ts', '.rb', '.go']
 
 def is_email_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.eml']
@@ -72,32 +59,90 @@ def get_file_title(file_name: str):
 
 @router.post("/", summary='上传文件', dependencies=[DependsJwtAuth])
 async def upload_file(file: UploadFile = File(...)):
-    if is_excel_file(file.filename):
-        await read_excel(file)
-    elif is_picture_file(file.filename):
-        await normal_read(file, "picture")
-    elif is_media_file(file.filename):
-        await normal_read(file, "media")
-    elif is_text_file(file.filename):
-        await normal_read(file, "text")
-    elif is_code_file(file.filename):
-        await normal_read(file, "code")
-    elif is_email_file(file.filename):
-        await normal_read(file, 'email')
-    elif is_pdf_file(file.filename):
-        await read_pdf(file)
-    else:
-        await normal_read(file, "text")
-
+    filename = file.filename
     resp = {"filename": file.filename}
+    if is_excel_file(filename):
+        log.info("read excel")
+        await read_excel(file)
+        return response_base.success(data=resp)
+
+    if is_picture_file(filename):
+        log.info("read picture")
+        await read_picture(file)
+        return response_base.success(data=resp)
+
+    if is_media_file(filename):
+        log.info("read media")
+        await read_media(file)
+        return response_base.success(data=resp)
+
+    if is_text_file(filename):
+        log.info("read text")
+        await read_text(file)
+        return response_base.success(data=resp)
+
+    if is_email_file(filename):
+        log.info("read email")
+        await read_email(file)
+        return response_base.success(data=resp)
+
+    if is_pdf_file(filename):
+        log.info("read pdf")
+        await read_pdf(file)
+        return response_base.success(data=resp)
+
+    log.info("no match, read text")
+    await read_text(file)
     return response_base.success(data=resp)
 
 
-async def normal_read(file: UploadFile, type: str):
+
+async def read_text(file: UploadFile = File(...)):
+    file_location, content = await save_file(file)
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    content_str = content.decode('utf-8')
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="text",content=content_str,
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
+
+
+
+async def read_picture(file: UploadFile):
     file_location = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
-    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type=type,
+    loop = asyncio.get_running_loop()
+    path = f"~/{file_location}"
+    pdf_records = await loop.run_in_executor(None, post_imagesocr_recog, path, "~/uploads/result/", "zhen_light")
+    content = pdf_records[0]['content']
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="picture",content=content,
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
+
+async def read_media(file: UploadFile):
+    file_location = await save_file(file)
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    loop = asyncio.get_running_loop()
+    path = f"~/{file_location}"
+    pdf_records = await loop.run_in_executor(None, post_audios_recog, path, "~/uploads/result/", "zhen")
+    content = pdf_records[0]['content']
+    print(content)
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="media",content=content,
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
+
+
+async def read_email(file: UploadFile):
+    file_location = await save_file(file)
+    name = get_filename(file.filename)
+    title = get_file_title(name)
+    loop = asyncio.get_running_loop()
+    path = f"~/{file_location}"
+    pdf_records = await loop.run_in_executor(None, post_imagesocr_recog, path, "~/uploads/result/", "zhen_light")
+    content = pdf_records[0]['content']
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type='email',content=content,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
 
@@ -106,13 +151,14 @@ async def read_pdf(file: UploadFile = File(...)):
     file_location = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
-    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",
-                                                file=file_location)
-    await sys_doc_service.create(obj=obj)
+    
     path = f"~/{file_location}"
     loop = asyncio.get_running_loop()
     pdf_records = await loop.run_in_executor(None, post_pdf_recog, path, "~/uploads/result/", "zhen_light")
-    print(pdf_records[0].content)
+    content = pdf_records[0]['content']
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",content=content,
+                                                file=file_location)
+    await sys_doc_service.create(obj=obj)
 
 
 
@@ -157,4 +203,4 @@ async def save_file(file: UploadFile = File(...)):
         content = await file.read()
         f.write(content)
     
-    return file_location
+    return file_location, content
