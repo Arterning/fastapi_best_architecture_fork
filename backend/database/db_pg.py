@@ -6,7 +6,7 @@ from typing import Annotated
 from uuid import uuid4
 
 from fastapi import Depends
-from sqlalchemy import URL
+from sqlalchemy import URL, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from backend.common.log import log
@@ -52,11 +52,25 @@ async def get_db() -> AsyncSession:
 # Session Annotated
 CurrentSession = Annotated[AsyncSession, Depends(get_db)]
 
+async def execute_sql_file(session: AsyncSession, file_path: str):
+    with open(file_path, 'r') as file:
+        sql_commands = file.read().strip().split(';')  # 根据分号分割 SQL 语句
+    for command in sql_commands:
+        if command.strip():  # 确保不是空命令
+            await session.execute(text(command))
+
 
 async def create_table():
     """创建数据库表"""
     async with async_engine.begin() as coon:
         await coon.run_sync(MappedBase.metadata.create_all)
+        result = await coon.execute(text("SELECT COUNT(*) FROM sys_user"))
+        count = result.scalar()
+        # 执行初始化脚本
+        if count == 0:  # 如果没有数据，执行初始化脚本
+            await execute_sql_file(coon, 'sql/init_test_data_pg.sql')
+        else:
+            log.info('sys_user 表中已有数据，跳过初始化脚本的执行')
 
 
 def uuid4_str() -> str:
