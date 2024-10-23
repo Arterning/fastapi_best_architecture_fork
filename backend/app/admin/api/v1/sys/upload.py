@@ -109,7 +109,7 @@ async def read_text(file: UploadFile = File(...)):
 
 
 async def read_picture(file: UploadFile):
-    file_location = await save_file(file)
+    file_location, _ = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
     loop = asyncio.get_running_loop()
@@ -121,7 +121,7 @@ async def read_picture(file: UploadFile):
     await sys_doc_service.create(obj=obj)
 
 async def read_media(file: UploadFile):
-    file_location = await save_file(file)
+    file_location, _ = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
     loop = asyncio.get_running_loop()
@@ -135,7 +135,7 @@ async def read_media(file: UploadFile):
 
 
 async def read_email(file: UploadFile):
-    file_location = await save_file(file)
+    file_location, _ = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
     loop = asyncio.get_running_loop()
@@ -148,7 +148,7 @@ async def read_email(file: UploadFile):
 
 
 async def read_pdf(file: UploadFile = File(...)):
-    file_location = await save_file(file)
+    file_location, _ = await save_file(file)
     name = get_filename(file.filename)
     title = get_file_title(name)
     
