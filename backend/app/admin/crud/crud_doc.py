@@ -54,7 +54,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             where_list.append(self.model.name.like(f'%{name}%'))
         if type is not None:
             where_list.append(self.model.type == type)
-        if ids:
+        if ids is not None:
             where_list.append(self.model.id.in_(ids))
         if where_list:
             stmt = stmt.where(and_(*where_list))
