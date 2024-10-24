@@ -24,8 +24,14 @@ class SysDocService:
             return sys_doc
 
     @staticmethod
-    async def get_select(*, name: str = None, type: str = None) -> Select:
-        return await sys_doc_dao.get_list(name=name, type=type)
+    async def token_search(tokens: str = None) -> list[int]:
+        async with async_db_session() as db:
+            res = await sys_doc_dao.token_search(db, tokens)
+            return res
+
+    @staticmethod
+    async def get_select(*, name: str = None, type: str = None, ids: list[int] = None) -> Select:
+        return await sys_doc_dao.get_list(name=name, type=type, ids=ids)
 
     @staticmethod
     async def get_all() -> Sequence[SysDoc]:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Sequence
 
-from sqlalchemy import select, Select
+from sqlalchemy import select, Select, text, desc, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy_crud_plus import CRUDPlus
@@ -28,17 +28,37 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         )
         return doc.scalars().first()
 
-    async def get_list(self, name: str = None, type: str = None) -> Select:
+    async def token_search(self, db: AsyncSession, tokens: str = None) -> list[int]:
+        if tokens:
+            query = f"""
+            SELECT DISTINCT doc_id
+            FROM sys_doc_data
+            WHERE to_tsvector('simple', tokens::text) @@ plainto_tsquery('{tokens}');
+            """
+            result = await db.execute(text(query))
+            ids = result.scalars().all()
+            print("token search ids", ids)
+            return ids
+        else:
+            return None
+
+
+    async def get_list(self, name: str = None, type: str = None, ids: list[int] = None) -> Select:
         """
         获取 SysDoc 列表
         :return:
         """
-        filters = {}
+        where_list = []
+        stmt = select(self.model).order_by(desc(self.model.created_time))
         if name is not None:
-            filters.update(name__like=f'%{name}%')
+            where_list.append(self.model.name.like(f'%{name}%'))
         if type is not None:
-            filters.update(type=type)
-        return await self.select_order('created_time', 'desc', **filters)
+            where_list.append(self.model.type == type)
+        if ids:
+            where_list.append(self.model.id.in_(ids))
+        if where_list:
+            stmt = stmt.where(and_(*where_list))
+        return stmt
 
     async def get_all(self, db: AsyncSession) -> Sequence[SysDoc]:
         """
