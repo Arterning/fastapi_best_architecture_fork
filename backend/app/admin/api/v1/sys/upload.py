@@ -115,7 +115,9 @@ async def read_picture(file: UploadFile):
     loop = asyncio.get_running_loop()
     path = f"~/{file_location}"
     pdf_records = await loop.run_in_executor(None, post_imagesocr_recog, path, "~/uploads/result/", "zhen_light")
-    content = pdf_records[0]['content']
+    content = ''
+    if pdf_records:
+        content = pdf_records['content']
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="picture",content=content,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
@@ -127,8 +129,9 @@ async def read_media(file: UploadFile):
     loop = asyncio.get_running_loop()
     path = f"~/{file_location}"
     pdf_records = await loop.run_in_executor(None, post_audios_recog, path, "~/uploads/result/", "zhen")
-    content = pdf_records[0]['content']
-    print(content)
+    content = ''
+    if pdf_records:
+        content = pdf_records['content']
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="media",content=content,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
@@ -141,7 +144,11 @@ async def read_email(file: UploadFile):
     loop = asyncio.get_running_loop()
     path = f"~/{file_location}"
     pdf_records = await loop.run_in_executor(None, post_emails_recog, path, "~/uploads/附录下载目录/", "~/uploads/附录二次识别输出目录", "zhen_light", "zhen")
-    content = pdf_records[0]['content']
+    content = ''
+    log.info(pdf_records)
+    for record in pdf_records:
+        if record['content']:
+            content += record['content']
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type='email',content=content,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
@@ -155,7 +162,9 @@ async def read_pdf(file: UploadFile = File(...)):
     path = f"~/{file_location}"
     loop = asyncio.get_running_loop()
     pdf_records = await loop.run_in_executor(None, post_pdf_recog, path, "~/uploads/result/", "zhen_light")
-    content = pdf_records[0]['content']
+    content = ''
+    if pdf_records:
+        content = pdf_records['content']
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="pdf",content=content,
                                                 file=file_location)
     await sys_doc_service.create(obj=obj)
@@ -185,10 +194,14 @@ async def read_excel(file: UploadFile = File(...)):
     doc_param = CreateSysDocParam(title=title, name=name, type='excel', file=file_location)
     doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
-        param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data)
+        tokens = dict_to_string(excel_data)
+        param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data, tokens = tokens)
         await sys_doc_service.create_doc_data(obj=param)
     return response_base.success(data=doc.id)
 
+
+def dict_to_string(input_dict):
+    return ' '.join(f"{key} {value}" for key, value in input_dict.items())
 
 async def save_file(file: UploadFile = File(...)):
     # 构建文件保存路径

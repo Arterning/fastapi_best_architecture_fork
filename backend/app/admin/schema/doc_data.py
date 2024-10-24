@@ -9,6 +9,7 @@ from backend.common.schema import SchemaBase
 class SysDocDataSchemaBase(SchemaBase):
     excel_data: dict
     doc_id: int
+    tokens: str
 
 
 class CreateSysDocDataParam(SysDocDataSchemaBase):

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Union
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, TEXT
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,9 +16,11 @@ class SysDocData(Base):
 
     id: Mapped[id_key] = mapped_column(init=False)
     doc_id: Mapped[int | None] = mapped_column(
-        ForeignKey('sys_doc.id', ondelete='SET NULL'), default=None, index=True, comment='文件ID'
+        ForeignKey('sys_doc.id', ondelete='CASCADE'), default=None, index=True, comment='文件ID'
     )
 
     doc: Mapped[Union['SysDoc', None]] = relationship(init=False, back_populates='doc_data')
 
     excel_data: Mapped[JSON | None] = mapped_column(JSON, default=None, comment='excel数据')
+
+    tokens: Mapped[str | None] = mapped_column(TEXT, default=None, comment='tokens')
