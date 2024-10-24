@@ -35,19 +35,7 @@ VALUES  (1, '测试', 'test', 0, 0, '', null, 0, null, null, 0, 0, 1, null, null
         (27, '删除', '', 0, 0, null, null, 2, null, 'sys:menu:del', 1, 1, 1, null, 24, '2024-01-07 12:01:48', null),
         (28, '系统监控', 'monitor', 0, 88, 'IconComputer', 'monitor', 0, null, null, 1, 1, 1, null, null, '2023-07-27 19:27:08', null),
         (29, 'Redis监控', 'Redis', 0, 0, null, 'redis', 1, '/monitor/redis/index.vue', 'sys:monitor:redis', 1, 1, 1, null, 28, '2023-07-27 19:28:03', null),
-        (30, '服务器监控', 'Server', 0, 0, null, 'server', 1, '/monitor/server/index.vue', 'sys:monitor:server', 1, 1, 1, null, 28, '2023-07-27 19:28:29', null),
-        (31, '系统自动化', 'automation', 0, 777, 'IconCodeSquare', 'automation', 0, null, null, 1, 1, 1, null, null, '2024-07-27 02:06:20', '2024-07-27 02:18:52'),
-        (32, '代码生成', 'CodeGenerator', 0, 0, null, 'code-generator', 1, '/automation/generator/index.vue', null, 1, 1, 1, null, 31, '2024-07-27 12:24:54', null),
-        (33, '导入', '', 0, 0, null, null, 2, null, 'gen:code:import', 1, 1, 1, null, 31, '2024-08-04 12:49:58', null),
-        (34, '新增业务', '', 0, 0, null, null, 2, null, 'gen:code:business:add', 1, 1, 1, null, 31, '2024-08-04 12:51:29', null),
-        (35, '编辑业务', '', 0, 0, null, null, 2, null, 'gen:code:business:edit', 1, 1, 1, null, 31, '2024-08-04 12:51:45', null),
-        (36, '删除业务', '', 0, 0, null, null, 2, null, 'gen:code:business:del', 1, 1, 1, null, 31, '2024-08-04 12:52:05', null),
-        (37, '新增模型', '', 0, 0, null, null, 2, null, 'gen:code:model:add', 1, 1, 1, null, 31, '2024-08-04 12:52:28', null),
-        (38, '编辑模型', '', 0, 0, null, null, 2, null, 'gen:code:model:edit', 1, 1, 1, null, 31, '2024-08-04 12:52:45', null),
-        (39, '删除模型', '', 0, 0, null, null, 2, null, 'gen:code:model:del', 1, 1, 1, null, 31, '2024-08-04 12:52:59', null),
-        (40, '生成', '', 0, 0, null, null, 2, null, 'gen:code:generate', 1, 1, 1, null, 31, '2024-08-04 12:55:03', null),
-        (41, 'GitHub', 'github', 0, 8888, 'IconGithub', 'https://github.com/wu-clan', 0, null, null, 1, 1, 1, null, null, '2024-07-27 12:32:46', null),
-        (42, '赞助', 'sponsor', 0, 9999, 'IconFire', 'https://wu-clan.github.io/sponsor/', 0, null, null, 1, 1, 1, null, null, '2024-07-27 12:39:57', null);
+        (30, '服务器监控', 'Server', 0, 0, null, 'server', 1, '/monitor/server/index.vue', 'sys:monitor:server', 1, 1, 1, null, 28, '2023-07-27 19:28:29', null);
 
 
 INSERT INTO sys_role_menu (id, role_id, menu_id)
@@ -66,3 +54,6 @@ INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, compo
 INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) values (44, '文件管理', 'Doc', 0, 0, 'IconFile', 'doc', 1, '/data/doc/index.vue', null, 1, 1, 1, null, 43, '2024-10-05 08:22:03.277761 +00:00', null);
 INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) values (45, '文件上传', 'Upload', 0, 2, 'IconUpload', 'upload', 1, '/data/upload/index.vue', null, 1, 1, 1, null, 43, '2024-10-05 11:41:57.239227 +00:00', '2024-10-05 11:45:09.031372 +00:00');
 INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) VALUES (46, '文件内容', 'DocDetail', 0, 0, null, 'doc-detail', 1, '/data/doc-detail/index.vue', null, 1, 0, 1, null, 43, '2024-10-23 14:02:28.496258 +00:00', '2024-10-23 14:04:54.336278 +00:00');
+
+
+CREATE INDEX idx_excel_data_fulltext ON sys_doc_data USING gin (to_tsvector('simple', tokens::text));

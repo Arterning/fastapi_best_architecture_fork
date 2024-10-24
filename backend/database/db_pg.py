@@ -69,6 +69,7 @@ async def create_table():
         # 执行初始化脚本
         if count == 0:  # 如果没有数据，执行初始化脚本
             await execute_sql_file(coon, 'sql/init_test_data_pg.sql')
+            log.info('初始化脚本执行成功')
         else:
             log.info('sys_user 表中已有数据，跳过初始化脚本的执行')
 
