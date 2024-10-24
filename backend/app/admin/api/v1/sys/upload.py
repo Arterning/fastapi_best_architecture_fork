@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 import asyncio
 from backend.common.log import log
-
+import jieba
 
 router = APIRouter()
 
@@ -194,7 +194,9 @@ async def read_excel(file: UploadFile = File(...)):
     doc_param = CreateSysDocParam(title=title, name=name, type='excel', file=file_location)
     doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
-        tokens = dict_to_string(excel_data)
+        strings = dict_to_string(excel_data)
+        seg_list = jieba.cut(strings, cut_all=True)
+        tokens = " ".join(seg_list)
         param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data, tokens = tokens)
         await sys_doc_service.create_doc_data(obj=param)
     return response_base.success(data=doc.id)

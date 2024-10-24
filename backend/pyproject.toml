@@ -55,6 +55,7 @@ dependencies = [
     "xlrd>=2.0.1",
     "requests>=2.32.3",
     "openpyxl>=3.1.5",
+    "jieba>=0.42.1",
 ]
 requires-python = ">=3.10,<3.13"
 readme = "README.md"

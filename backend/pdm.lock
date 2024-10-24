@@ -5,7 +5,7 @@
 groups = ["default", "deploy", "lint"]
 strategy = ["inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:1fd5d8ab0be3300cfed717e0c0ae01efe7e747a9025db33458c7604c05337861"
+content_hash = "sha256:6e33ac35b54467ad6cd937cb5acb6847d8d99a07a53195db4ddce268219e007f"
 
 [[package]]
 name = "aiofiles"
@@ -864,6 +864,15 @@ groups = ["default"]
 files = [
     {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
     {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
+]
+
+[[package]]
+name = "jieba"
+version = "0.42.1"
+summary = "Chinese Words Segmentation Utilities"
+groups = ["default"]
+files = [
+    {file = "jieba-0.42.1.tar.gz", hash = "sha256:055ca12f62674fafed09427f176506079bc135638a14e23e25be909131928db2"},
 ]
 
 [[package]]
