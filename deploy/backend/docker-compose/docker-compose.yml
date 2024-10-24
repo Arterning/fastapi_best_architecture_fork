@@ -52,7 +52,7 @@ services:
         supervisorctl restart fastapi_server
 
   fba_pg:
-    image: postgres:12
+    image: pgvector/pgvector:pg17
     container_name: fba_pg
     ports:
       - "5432:5432"

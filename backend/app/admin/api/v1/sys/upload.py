@@ -7,7 +7,7 @@ from backend.app.admin.schema.doc_data import CreateSysDocDataParam
 from backend.app.admin.service.doc_service import sys_doc_service
 from backend.common.response.response_schema import response_base
 from backend.common.security.jwt import DependsJwtAuth
-from backend.utils.doc_utils import post_pdf_recog, post_imagesocr_recog, post_audios_recog
+from backend.utils.doc_utils import post_pdf_recog, post_imagesocr_recog, post_audios_recog, post_emails_recog
 import os
 from fastapi import File, UploadFile
 from pathlib import Path
@@ -140,7 +140,7 @@ async def read_email(file: UploadFile):
     title = get_file_title(name)
     loop = asyncio.get_running_loop()
     path = f"~/{file_location}"
-    pdf_records = await loop.run_in_executor(None, post_imagesocr_recog, path, "~/uploads/result/", "zhen_light")
+    pdf_records = await loop.run_in_executor(None, post_emails_recog, path, "~/uploads/附录下载目录/", "~/uploads/附录二次识别输出目录", "zhen_light", "zhen")
     content = pdf_records[0]['content']
     obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type='email',content=content,
                                                 file=file_location)
@@ -177,7 +177,7 @@ async def read_excel(file: UploadFile = File(...)):
     data_json = df.to_dict(orient="records")
 
     # 构建文件保存路径
-    file_location = await save_file(file)
+    file_location, _ = await save_file(file)
 
     # 将数据存入数据库
     name = get_filename(file.filename)
