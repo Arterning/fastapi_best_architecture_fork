@@ -57,11 +57,11 @@ class AuthService:
                     raise errors.AuthorizationError(msg='用户名或密码有误')
                 elif not current_user.status:
                     raise errors.AuthorizationError(msg='用户已被锁定, 请联系统管理员')
-                captcha_code = await redis_client.get(f'{admin_settings.CAPTCHA_LOGIN_REDIS_PREFIX}:{request.state.ip}')
-                if not captcha_code:
-                    raise errors.AuthorizationError(msg='验证码失效，请重新获取')
-                if captcha_code.lower() != obj.captcha.lower():
-                    raise errors.CustomError(error=CustomErrorCode.CAPTCHA_ERROR)
+                # captcha_code = await redis_client.get(f'{admin_settings.CAPTCHA_LOGIN_REDIS_PREFIX}:{request.state.ip}')
+                # if not captcha_code:
+                #     raise errors.AuthorizationError(msg='验证码失效，请重新获取')
+                # if captcha_code.lower() != obj.captcha.lower():
+                #     raise errors.CustomError(error=CustomErrorCode.CAPTCHA_ERROR)
                 current_user_id = current_user.id
                 access_token = await create_access_token(str(current_user_id), current_user.is_multi_login)
                 refresh_token = await create_refresh_token(str(current_user_id), current_user.is_multi_login)
