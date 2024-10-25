@@ -23,15 +23,21 @@ class SysDocService:
                 raise errors.NotFoundError(msg='文件不存在')
             return sys_doc
 
+    # @staticmethod
+    # async def token_search(tokens: str = None) -> list[int]:
+    #     async with async_db_session() as db:
+    #         res = await sys_doc_dao.token_search(db, tokens)
+    #         return res
+
     @staticmethod
-    async def token_search(tokens: str = None) -> list[int]:
+    async def update_tokens(doc: SysDoc, a_tokens: str = None, b_tokens: str = None) -> list[int]:
         async with async_db_session() as db:
-            res = await sys_doc_dao.token_search(db, tokens)
+            res = await sys_doc_dao.update_tokens(db, doc, a_tokens, b_tokens)
             return res
 
     @staticmethod
-    async def get_select(*, name: str = None, type: str = None, ids: list[int] = None) -> Select:
-        return await sys_doc_dao.get_list(name=name, type=type, ids=ids)
+    async def get_select(*, name: str = None, type: str = None, tokens: str = None, ids: list[int] = None) -> Select:
+        return await sys_doc_dao.get_list(name=name, type=type, tokens=tokens, ids=ids)
 
     @staticmethod
     async def get_all() -> Sequence[SysDoc]:
@@ -41,23 +47,25 @@ class SysDocService:
 
     @staticmethod
     async def create(*, obj: CreateSysDocParam) -> SysDoc:
+        doc = None
         async with async_db_session.begin() as db:
             # sys_doc = await sys_doc_dao.get_by_name(db, obj.name)
             # if sys_doc:
             #     raise errors.ForbiddenError(msg='文件已存在')
             doc = await sys_doc_dao.create(db, obj)
-            title = doc.title
-            content = doc.content
-            a_tokens = ''
-            b_tokens = ''
-            if title:
-                a_seg_list = jieba.cut(title, cut_all=True)
-                a_tokens =  " ".join(a_seg_list) 
-            if content:
-                b_seg_list = jieba.cut(content, cut_all=True)
-                b_tokens = " ".join(b_seg_list)
-            await sys_doc_dao.update_tokens(db, doc, a_tokens, b_tokens)
-            return doc
+        title = doc.title
+        content = doc.content
+        a_tokens = ''
+        b_tokens = ''
+        if title:
+            a_seg_list = jieba.cut(title, cut_all=True)
+            a_tokens =  " ".join(a_seg_list) 
+        if content:
+            b_seg_list = jieba.cut(content, cut_all=True)
+            b_tokens = " ".join(b_seg_list)
+        await sys_doc_service.update_tokens(doc, a_tokens, b_tokens)
+        return doc
+
 
     @staticmethod
     async def create_doc_data(*, obj: CreateSysDocDataParam) -> SysDocData:
@@ -68,6 +76,20 @@ class SysDocService:
     async def update(*, pk: int, obj: UpdateSysDocParam) -> int:
         async with async_db_session.begin() as db:
             count = await sys_doc_dao.update(db, pk, obj)
+            sys_doc = await sys_doc_dao.get(db, pk)
+            if not sys_doc:
+                raise errors.NotFoundError(msg='文件不存在')
+            title = sys_doc.title
+            content = sys_doc.content
+            a_tokens = ''
+            b_tokens = ''
+            if title:
+                a_seg_list = jieba.cut(title, cut_all=True)
+                a_tokens =  " ".join(a_seg_list) 
+            if content:
+                b_seg_list = jieba.cut(content, cut_all=True)
+                b_tokens = " ".join(b_seg_list)
+            await sys_doc_dao.update_tokens(db, sys_doc, a_tokens, b_tokens)
             return count
 
     @staticmethod

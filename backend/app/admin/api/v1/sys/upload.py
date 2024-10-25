@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import APIRouter
 
-from backend.app.admin.schema.doc import CreateSysDocParam
+from backend.app.admin.schema.doc import CreateSysDocParam, UpdateSysDocParam
 from backend.app.admin.schema.doc_data import CreateSysDocDataParam
 from backend.app.admin.service.doc_service import sys_doc_service
 from backend.common.response.response_schema import response_base
@@ -15,7 +15,6 @@ import pandas as pd
 import numpy as np
 import asyncio
 from backend.common.log import log
-import jieba
 
 router = APIRouter()
 
@@ -191,14 +190,16 @@ async def read_excel(file: UploadFile = File(...)):
     # 将数据存入数据库
     name = get_filename(file.filename)
     title = get_file_title(name)
+    content = ''
     doc_param = CreateSysDocParam(title=title, name=name, type='excel', file=file_location)
     doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
         strings = dict_to_string(excel_data)
-        seg_list = jieba.cut(strings, cut_all=True)
-        tokens = " ".join(seg_list)
-        param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data, tokens = tokens)
+        content += strings
+        param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data)
         await sys_doc_service.create_doc_data(obj=param)
+    uparam = UpdateSysDocParam(content=content)
+    await sys_doc_service.update(pk=doc.id, obj=uparam)
     return response_base.success(data=doc.id)
 
 

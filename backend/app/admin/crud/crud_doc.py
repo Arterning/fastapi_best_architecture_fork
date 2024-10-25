@@ -28,32 +28,34 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         )
         return doc.scalars().first()
 
-    async def token_search(self, db: AsyncSession, tokens: str = None) -> list[int]:
-        if tokens:
-            query = f"""
-            SELECT DISTINCT doc_id
-            FROM sys_doc_data
-            WHERE to_tsvector('simple', tokens::text) @@ plainto_tsquery('{tokens}');
-            """
-            result = await db.execute(text(query))
-            ids = result.scalars().all()
-            print("token search ids", ids)
-            return ids
-        else:
-            return None
+    # async def token_search(self, db: AsyncSession, tokens: str = None) -> list[int]:
+    #     if tokens:
+    #         query = f"""
+    #         SELECT DISTINCT doc_id
+    #         FROM sys_doc_data
+    #         WHERE to_tsvector('simple', tokens::text) @@ plainto_tsquery('{tokens}');
+    #         """
+    #         result = await db.execute(text(query))
+    #         ids = result.scalars().all()
+    #         print("token search ids", ids)
+    #         return ids
+    #     else:
+    #         return None
 
 
-    async def get_list(self, name: str = None, type: str = None, ids: list[int] = None) -> Select:
+    async def get_list(self, name: str = None, type: str = None, tokens: str = None, ids: list[int] = None) -> Select:
         """
         获取 SysDoc 列表
         :return:
         """
         where_list = []
         stmt = select(self.model).order_by(desc(self.model.created_time))
-        if name is not None:
+        if name is not None and name != '':
             where_list.append(self.model.name.like(f'%{name}%'))
         if type is not None:
             where_list.append(self.model.type == type)
+        if tokens is not None and tokens != '':
+            where_list.append(self.model.tokens.match(tokens))
         if ids is not None:
             where_list.append(self.model.id.in_(ids))
         if where_list:
@@ -84,9 +86,12 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             UPDATE sys_doc
                 SET tokens = setweight(to_tsvector('simple', '{a_tokens}'), 'A') ||
                              setweight(to_tsvector('simple', '{b_tokens}'), 'B')
-                WHERE name = '{doc.name}'
+                WHERE id = {doc.id}
         """
-        await db.execute(text(update_sql))
+        result = await db.execute(text(update_sql))
+        # Don't forget db.commit
+        await db.commit()
+        return result
 
 
     async def update(self, db: AsyncSession, pk: int, obj_in: UpdateSysDocParam) -> int:

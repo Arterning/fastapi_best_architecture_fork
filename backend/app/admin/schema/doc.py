@@ -19,8 +19,12 @@ class CreateSysDocParam(SysDocSchemaBase):
     pass
 
 
-class UpdateSysDocParam(SysDocSchemaBase):
-    pass
+class UpdateSysDocParam(SchemaBase):
+    title: str | None = None
+    name: str | None = None
+    type: str | None = None
+    content: str | None = None
+    desc: str | None = None
 
 
 class GetSysDocListDetails(SysDocSchemaBase):

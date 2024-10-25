@@ -56,4 +56,4 @@ INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, compo
 INSERT INTO sys_menu (id, title, name, level, sort, icon, path, menu_type, component, perms, status, show, cache, remark, parent_id, created_time, updated_time) VALUES (46, '文件内容', 'DocDetail', 0, 0, null, 'doc-detail', 1, '/data/doc-detail/index.vue', null, 1, 0, 1, null, 43, '2024-10-23 14:02:28.496258 +00:00', '2024-10-23 14:04:54.336278 +00:00');
 
 
-CREATE INDEX idx_excel_data_fulltext ON sys_doc_data USING gin (to_tsvector('simple', tokens::text));
+CREATE INDEX idx_sys_doc_fulltext ON sys_doc USING gin (to_tsvector('simple', tokens::text));
