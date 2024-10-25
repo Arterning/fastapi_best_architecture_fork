@@ -82,15 +82,17 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
         return await self.create_model(db, obj_in)
 
     async def update_tokens(self, db: AsyncSession, doc: SysDoc, a_tokens: str, b_tokens: str):
-        update_sql = f"""
+        update_sql = """
             UPDATE sys_doc
-                SET tokens = setweight(to_tsvector('simple', '{a_tokens}'), 'A') ||
-                             setweight(to_tsvector('simple', '{b_tokens}'), 'B')
-                WHERE id = {doc.id}
+            SET tokens = setweight(to_tsvector('simple', :a_tokens), 'A') ||
+                        setweight(to_tsvector('simple', :b_tokens), 'B')
+            WHERE id = :doc_id
         """
-        result = await db.execute(text(update_sql))
-        # Don't forget db.commit
-        await db.commit()
+        result = await db.execute(
+            text(update_sql), 
+            {"a_tokens": a_tokens, "b_tokens": b_tokens, "doc_id": doc.id}
+        )
+        await db.commit()  # 提交事务
         return result
 
 

@@ -21,7 +21,7 @@ RUN mkdir -p /var/log/fastapi_server
 
 COPY deploy/backend/fastapi_server.conf /etc/supervisor/conf.d/
 
-RUN mv backend/.env.docker /backend/.env
+RUN mv backend/.env.docker /fba/backend/.env
 
 EXPOSE 8001
 
