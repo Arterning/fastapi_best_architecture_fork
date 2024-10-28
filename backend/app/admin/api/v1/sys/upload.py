@@ -32,6 +32,8 @@ def get_file_extension(filename: str) -> str:
 def is_excel_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.xls', '.xlsx']
 
+def is_csv_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.csv']
 
 def is_pdf_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.pdf']
@@ -64,7 +66,12 @@ async def upload_file(file: UploadFile = File(...)):
         log.info("read excel")
         await read_excel(file)
         return response_base.success(data=resp)
-
+    
+    if is_csv_file(filename):
+        log.info("read csv")
+        await read_text(file)
+        return response_base.success(data=resp)
+    
     if is_picture_file(filename):
         log.info("read picture")
         await read_picture(file)
@@ -191,15 +198,17 @@ async def read_excel(file: UploadFile = File(...)):
     name = get_filename(file.filename)
     title = get_file_title(name)
     content = ''
-    doc_param = CreateSysDocParam(title=title, name=name, type='excel', file=file_location)
-    doc = await sys_doc_service.create(obj=doc_param)
     for excel_data in data_json:
         strings = dict_to_string(excel_data)
-        content += strings
+        row = strings + '\n'
+        content += row
+    content = content.replace("Unnamed", "").replace("None", "")
+    doc_param = CreateSysDocParam(title=title, name=name, type='excel', content=content, file=file_location)
+    doc = await sys_doc_service.create(obj=doc_param)
+
+    for excel_data in data_json:
         param = CreateSysDocDataParam(doc_id=doc.id, excel_data=excel_data)
         await sys_doc_service.create_doc_data(obj=param)
-    uparam = UpdateSysDocParam(content=content)
-    await sys_doc_service.update(pk=doc.id, obj=uparam)
     return response_base.success(data=doc.id)
 
 

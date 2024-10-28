@@ -36,8 +36,16 @@ class SysDocService:
             return res
 
     @staticmethod
-    async def get_select(*, name: str = None, type: str = None, tokens: str = None, ids: list[int] = None) -> Select:
-        return await sys_doc_dao.get_list(name=name, type=type, tokens=tokens, ids=ids)
+    async def get_select(*, name: str = None, type: str = None,
+                          tokens: str = None, likeq: str = None, ids: list[int] = None) -> Select:
+        return await sys_doc_dao.get_list(name=name, type=type, tokens=tokens, likeq=likeq, ids=ids)
+
+    @staticmethod
+    async def search(*, tokens: str = None):
+        async with async_db_session() as db:
+            res = await sys_doc_dao.search(db, tokens)
+            return res
+
 
     @staticmethod
     async def get_all() -> Sequence[SysDoc]:
@@ -60,9 +68,13 @@ class SysDocService:
         if title:
             a_seg_list = jieba.cut(title, cut_all=True)
             a_tokens =  " ".join(a_seg_list) 
-        if content:
+        if obj.type == 'excel':
+            b_tokens = obj.content
+        if content and obj.type != 'excel':
             b_seg_list = jieba.cut(content, cut_all=True)
             b_tokens = " ".join(b_seg_list)
+        print("a_tokens", a_tokens)
+        print("b_tokens", b_tokens)
         await sys_doc_service.update_tokens(doc, a_tokens, b_tokens)
         return doc
 
@@ -85,10 +97,12 @@ class SysDocService:
             b_tokens = ''
             if title:
                 a_seg_list = jieba.cut(title, cut_all=True)
-                a_tokens =  " ".join(a_seg_list) 
+                a_tokens =  " ".join(a_seg_list)
+                print("a_tokens", a_tokens)
             if content:
                 b_seg_list = jieba.cut(content, cut_all=True)
                 b_tokens = " ".join(b_seg_list)
+                print("b_tokens", b_tokens)
             await sys_doc_dao.update_tokens(db, sys_doc, a_tokens, b_tokens)
             return count
 

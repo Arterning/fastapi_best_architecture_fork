@@ -16,6 +16,19 @@ from backend.utils.serializers import select_as_dict
 
 router = APIRouter()
 
+@router.get(
+    '/search',
+    summary='（模糊条件）获取所有文件',
+    dependencies=[
+        DependsJwtAuth,
+        DependsPagination,
+    ],
+)
+async def search(tokens: Annotated[str | None, Query()] = None) -> ResponseModel:
+    docs = await sys_doc_service.search(tokens=tokens)
+    print("docs", docs)
+    return response_base.success(data=docs)
+
 
 @router.get('/{pk}', summary='获取文件详情', dependencies=[DependsJwtAuth])
 async def get_sys_doc(pk: Annotated[int, Path(...)]) -> ResponseModel:
@@ -41,9 +54,10 @@ async def get_sys_doc(pk: Annotated[int, Path(...)]) -> ResponseModel:
 async def get_pagination_sys_doc(db: CurrentSession, 
                                  name: Annotated[str | None, Query()] = None,
                                  tokens: Annotated[str | None, Query()] = None,
+                                 likeq: Annotated[str | None, Query()] = None,
                                  type: Annotated[str | None, Query()] = None,) -> ResponseModel:
     # ids = await sys_doc_service.token_search(tokens=tokens)
-    sys_doc_select = await sys_doc_service.get_select(name=name, type=type, tokens=tokens)
+    sys_doc_select = await sys_doc_service.get_select(name=name, type=type, tokens=tokens, likeq=likeq)
     page_data = await paging_data(db, sys_doc_select, GetSysDocListDetails)
     return response_base.success(data=page_data)
 

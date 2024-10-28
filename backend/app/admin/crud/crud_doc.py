@@ -42,8 +42,32 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
     #     else:
     #         return None
 
+    async def search(self, db: AsyncSession, tokens: str = None):
+        if tokens:
+            query = f"""
+            SELECT id, name, title,
+            ts_headline('simple', content, plainto_tsquery(:tokens)) AS hit
+            FROM sys_doc
+            WHERE tokens @@ plainto_tsquery(:tokens);
+            """
+            result = await db.execute(text(query), {"tokens": tokens})
+            # 使用 fetchall() 来获取完整的行
+            docs = result.fetchall()  # 返回所有行
 
-    async def get_list(self, name: str = None, type: str = None, tokens: str = None, ids: list[int] = None) -> Select:
+            # 将每一行转为字典格式，便于查看
+            docs_list = [{
+                "id": doc.id, 
+                "name": doc.name, 
+                "title": doc.title,
+                "hit": doc.hit,
+            } for doc in docs]
+            
+            return docs_list
+        else:
+            return []
+
+
+    async def get_list(self, name: str = None, type: str = None, tokens: str = None, likeq: str = None, ids: list[int] = None) -> Select:
         """
         获取 SysDoc 列表
         :return:
@@ -56,6 +80,8 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             where_list.append(self.model.type == type)
         if tokens is not None and tokens != '':
             where_list.append(self.model.tokens.match(tokens))
+        if likeq is not None and likeq != '':
+            where_list.append(self.model.content.like(f'%{likeq}%'))
         if ids is not None:
             where_list.append(self.model.id.in_(ids))
         if where_list:
