@@ -45,7 +45,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
     async def search(self, db: AsyncSession, tokens: str = None):
         if tokens:
             query = f"""
-            SELECT id, name, title,
+            SELECT id, name, title, type,
             ts_headline('simple', content, plainto_tsquery(:tokens)) AS hit
             FROM sys_doc
             WHERE tokens @@ plainto_tsquery(:tokens);
@@ -58,6 +58,7 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             docs_list = [{
                 "id": doc.id, 
                 "name": doc.name, 
+                "type": doc.type,
                 "title": doc.title,
                 "hit": doc.hit,
             } for doc in docs]
