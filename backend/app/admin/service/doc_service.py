@@ -79,7 +79,7 @@ class SysDocService:
         b_tokens = ''
         if title:
             a_seg_list = jieba.cut(title, cut_all=True)
-            a_tokens =  " ".join(a_seg_list) 
+            a_tokens =  " ".join(a_seg_list) + " " + doc.type
         if obj.type == 'excel':
             b_tokens = obj.content
         if content and obj.type != 'excel':
