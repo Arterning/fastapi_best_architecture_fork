@@ -28,6 +28,8 @@ Path(UPLOAD_DIRECTORY).mkdir(parents=True, exist_ok=True)
 def get_file_extension(filename: str) -> str:
     return os.path.splitext(filename)[1][1:]
 
+def is_zip_file(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ['.zip']
 
 def is_excel_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ['.xls', '.xlsx']
@@ -96,6 +98,11 @@ async def upload_file(file: UploadFile = File(...)):
         log.info("read pdf")
         await read_pdf(file)
         return response_base.success(data=resp)
+    
+    if is_zip_file(filename):
+        log.info("read zip")
+        # await read_zip(file)
+        return response_base.success(data=resp)
 
     log.info("no match, read text")
     await read_text(file)
@@ -151,12 +158,21 @@ async def read_email(file: UploadFile):
     path = f"~/{file_location}"
     pdf_records = await loop.run_in_executor(None, post_emails_recog, path, "~/uploads/附录下载目录/", "~/uploads/附录二次识别输出目录", "zhen_light", "zhen")
     content = ''
-    log.info(pdf_records)
-    for record in pdf_records:
-        if record['content']:
-            content += record['content']
-    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type='email',content=content,
-                                                file=file_location)
+    log.info("email res", pdf_records)
+    email_subject, email_from, email_to, email_time = '', '', '', ''
+    if pdf_records:
+        for record in pdf_records:
+            co = record["content"]
+            if isinstance(co, str):
+                content += co
+            if isinstance(co, dict):
+                email_subject = co["subject"]
+                email_from = co["from"]
+                email_to = co["to"]
+                email_time = co["date"]
+    obj: CreateSysDocParam = CreateSysDocParam(title=title, name=name, type="email",content=content,
+                                               email_subject=email_subject,email_from=email_from,
+                                               email_to=email_to, email_time=email_time, file=file_location)
     await sys_doc_service.create(obj=obj)
 
 
