@@ -68,7 +68,10 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             return []
 
 
-    async def get_list(self, name: str = None, type: str = None, tokens: str = None, likeq: str = None, ids: list[int] = None) -> Select:
+    async def get_list(self, name: str = None, type: str = None,
+                       email_from: str = None, email_subject: str = None,
+                       email_time: str = None, email_to: str = None,
+                        tokens: str = None, likeq: str = None, ids: list[int] = None) -> Select:
         """
         获取 SysDoc 列表
         :return:
@@ -83,6 +86,14 @@ class CRUDSysDoc(CRUDPlus[SysDoc]):
             where_list.append(self.model.tokens.match(tokens))
         if likeq is not None and likeq != '':
             where_list.append(self.model.content.like(f'%{likeq}%'))
+        if email_from is not None and email_from != '':
+            where_list.append(self.model.email_from.like(f'%{email_from}%'))
+        if email_to is not None and email_to != '':
+            where_list.append(self.model.email_to.like(f'%{email_to}%'))
+        if email_subject is not None and email_subject != '':
+            where_list.append(self.model.email_subject.like(f'%{email_subject}%'))
+        if email_time is not None and email_time != '':
+            where_list.append(self.model.email_time.like(f'%{email_time}%'))
         if ids is not None:
             where_list.append(self.model.id.in_(ids))
         if where_list:

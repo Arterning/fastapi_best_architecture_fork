@@ -22,4 +22,9 @@ class SysDoc(Base):
     file: Mapped[str | None] = mapped_column(TEXT, default=None, comment='原文')
     tokens: Mapped[TSVECTOR | None] = mapped_column(TSVECTOR, default=None, comment='tokens')
 
+    email_subject: Mapped[str | None] = mapped_column(TEXT, default=None, comment='邮件主题')
+    email_from: Mapped[str | None] = mapped_column(String(500), default=None, comment='邮件发送人')
+    email_to: Mapped[str | None] = mapped_column(String(500), default=None, comment='邮件接受人')
+    email_time: Mapped[str | None] = mapped_column(String(500), default=None, comment='邮件时间')
+
     doc_data: Mapped[list['SysDocData']] = relationship(init=False, back_populates='doc')

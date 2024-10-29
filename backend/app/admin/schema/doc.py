@@ -13,6 +13,10 @@ class SysDocSchemaBase(SchemaBase):
     content: str | None = None
     desc: str | None = None
     file: str | None = None
+    email_subject: str | None = None
+    email_from: str | None = None
+    email_to: str | None = None
+    email_time: str | None = None
 
 
 class CreateSysDocParam(SysDocSchemaBase):
