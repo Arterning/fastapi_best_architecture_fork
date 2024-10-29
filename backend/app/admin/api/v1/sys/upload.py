@@ -14,7 +14,10 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import asyncio
+from io import BytesIO
 from backend.common.log import log
+import traceback
+import zipfile
 
 router = APIRouter()
 
@@ -101,7 +104,7 @@ async def upload_file(file: UploadFile = File(...)):
     
     if is_zip_file(filename):
         log.info("read zip")
-        # await read_zip(file)
+        await read_zip(file)
         return response_base.success(data=resp)
 
     log.info("no match, read text")
@@ -245,3 +248,41 @@ async def save_file(file: UploadFile = File(...)):
         f.write(content)
     
     return file_location, content
+
+
+
+async def read_zip(file: UploadFile = File(...)):
+    file_location, _ = await save_file(file)
+    with zipfile.ZipFile(file_location, "r") as zip_ref:
+        name_list = zip_ref.namelist()
+        for file_name in name_list:
+            with zip_ref.open(file_name) as single_file:
+                try:
+                    name = os.path.basename(file_name)
+                    title = get_file_title(name)
+                    log.info(f"Start read {title}")
+                    file_content = single_file.read()
+                    # 创建BytesIO对象，模拟上传文件
+                    file_bytes = BytesIO(file_content)
+                    file_upload_file = UploadFile(
+                            file_bytes,
+                            filename=file_name,
+                    )
+                    if is_pdf_file(name):
+                        await read_pdf(file_upload_file)
+                    if is_excel_file(name):
+                        await read_excel(file_upload_file)
+                    if is_csv_file(name):
+                        await read_text(file)
+                    if is_picture_file(name):
+                        await read_picture(file_upload_file)
+                    if is_media_file(name):
+                        await read_media(file_upload_file)
+                    if is_text_file(name):
+                        await read_text(file_upload_file)
+                    if is_email_file(name):
+                        await read_email(file_upload_file)
+                    log.info(f"Success read {title}")
+                except Exception as e:
+                    traceback.print_exc()
+        os.remove(file_location)
