@@ -1,63 +1,68 @@
-# FBA Project - Backend
+# FastAPI Best Architecture - Backend
 
 ## Docker
 
-> [!IMPORTANT]
-> Due to Docker context limitations, you cannot successfully build a image using a Dockerfile in the current directory
-
 1. Make sure you're at the root of the project
-2. Run the following Docker command to build a image:
+2. Run the following Docker command to build container:
 
    ```shell
-   docker build -f backend/backend.dockerfile -t fba_backend_independent .
+   docker build -f Dockerfile -t fba_backend_independent .
    ```
 
-3. Start decker image
+3. Start container
+
+   Native boot needs to change `127.0.0.1` in `.env` to `host.docker.internal`
 
    ```shell
-   docker run -d fba_backend_independent -p 8000:8000 --name fba_app
+   docker run -d -p 8000:8000 --name fba_server fba_backend_independent
    ```
 
 ## Contributing
 
 1. Prerequisites
 
-   You'll need the following prerequisites:
-    - Any Python version between Python >= 3.10
-    - virtualenv or other virtual environment tool
-    - git
-    - [PDM](https://pdm-project.org/latest/)
+    - Python >= 3.10
+    - Git
+    - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+    - Fork this repository to your GitHub account
 
 2. Installation and setup
 
+   Clone your forked repository:
+
    ```shell
-   # Clone your fork and cd into the repo directory
-   git clone https://github.com/<your username>/fastapi_best_architecture.git
-   
-   cd fastapi_best_architecture/backend
-   
-   # Install requirements.txt
-   pdm install
+   git clone https://github.com/<your account>/fastapi_best_architecture.git
    ```
 
-3. Check out a new branch and make your changes
+   Go to the root directory of the project, open the terminal, and run the following command:
+
+   ```sh
+   uv sync --frozen
+   ```
+
+3. Checkout
+
+   Checkout a new branch and make your changes
 
    ```shell
-   # Checkout a new branch and make your changes
    git checkout -b your-new-feature-branch
-   # Make your changes...
    ```
 
-4. Run linting
+4. Format and Lint
+
+   Auto-formatting and lint via `pre-commit`
 
    ```shell
-   # Run automated code formatting and linting
-   pdm lint
+   pre-commit run --all-files
    ```
 
-5. Commit and push your changes
+5. Commit and push
 
-   Commit your changes, push your branch to GitHub, and create a pull request.
+   Commit your changes and push your branch to the GitHub.
+
+6. PR
+
+   Create a PR via GitHub
 
 ## Scripts
 
@@ -71,8 +76,8 @@
 
 - `celery-start.sh`: For celery docker script, implementation is not recommended
 
-- `format.sh`: Perform ruff format check
+- `scripts/format.sh`: Perform ruff format check
 
-- `lint.sh`: Perform pre-commit formatting
+- `scripts/lint.sh`: Perform pre-commit formatting
 
-- `pdm_export.sh`: Execute pdm export dependency package
+- `scripts/export.sh`: Execute uv export dependency package

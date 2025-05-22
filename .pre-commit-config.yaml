@@ -1,14 +1,14 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
-      - id: check-added-large-files
-      - id: end-of-file-fixer
+#      - id: check-added-large-files
+#      - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.6.4
+    rev: v0.11.9
     hooks:
       - id: ruff
         args:
@@ -19,19 +19,12 @@ repos:
           - '--unsafe-fixes'
       - id: ruff-format
 
-  - repo: https://github.com/pdm-project/pdm
-    rev: 2.18.1
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.3
     hooks:
-      - id: pdm-export
+      - id: uv-lock
+      - id: uv-export
         args:
-          - '-p'
-          - 'backend'
           - '-o'
-          - 'backend/requirements.txt'
-          - '--without-hashes'
-        files: backend/pdm\.lock$
-      - id: pdm-lock-check
-        args:
-          - '-p'
-          - 'backend'
-        files: backend/pdm\.lock$
+          - 'requirements.txt'
+          - '--no-hashes'

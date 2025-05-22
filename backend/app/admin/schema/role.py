@@ -4,36 +4,52 @@ from datetime import datetime
 
 from pydantic import ConfigDict, Field
 
-from backend.app.admin.schema.menu import GetMenuListDetails
-from backend.common.enums import RoleDataScopeType, StatusType
+from backend.app.admin.schema.data_scope import GetDataScopeDetail
+from backend.app.admin.schema.menu import GetMenuDetail
+from backend.common.enums import StatusType
 from backend.common.schema import SchemaBase
 
 
 class RoleSchemaBase(SchemaBase):
-    name: str
-    data_scope: RoleDataScopeType = Field(
-        default=RoleDataScopeType.custom, description='权限范围（1：全部数据权限 2：自定义数据权限）'
-    )
-    status: StatusType = Field(default=StatusType.enable)
-    remark: str | None = None
+    """角色基础模型"""
+
+    name: str = Field(description='角色名称')
+    status: StatusType = Field(StatusType.enable, description='状态')
+    remark: str | None = Field(None, description='备注')
 
 
 class CreateRoleParam(RoleSchemaBase):
-    pass
+    """创建角色参数"""
 
 
 class UpdateRoleParam(RoleSchemaBase):
-    pass
+    """更新角色参数"""
 
 
 class UpdateRoleMenuParam(SchemaBase):
-    menus: list[int]
+    """更新角色菜单参数"""
+
+    menus: list[int] = Field(description='菜单 ID 列表')
 
 
-class GetRoleListDetails(RoleSchemaBase):
+class UpdateRoleScopeParam(SchemaBase):
+    """更新角色数据范围参数"""
+
+    scopes: list[int] = Field(description='数据范围 ID 列表')
+
+
+class GetRoleDetail(RoleSchemaBase):
+    """角色详情"""
+
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    created_time: datetime
-    updated_time: datetime | None = None
-    menus: list[GetMenuListDetails]
+    id: int = Field(description='角色 ID')
+    created_time: datetime = Field(description='创建时间')
+    updated_time: datetime | None = Field(None, description='更新时间')
+
+
+class GetRoleWithRelationDetail(GetRoleDetail):
+    """角色关联详情"""
+
+    menus: list[GetMenuDetail | None] = Field([], description='菜单详情列表')
+    scopes: list[GetDataScopeDetail | None] = Field([], description='数据范围列表')

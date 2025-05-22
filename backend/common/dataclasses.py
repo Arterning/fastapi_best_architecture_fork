@@ -38,17 +38,29 @@ class RequestCallNext:
 class NewToken:
     new_access_token: str
     new_access_token_expire_time: datetime
-    new_refresh_token: str
-    new_refresh_token_expire_time: datetime
+    session_uuid: str
 
 
 @dataclasses.dataclass
 class AccessToken:
     access_token: str
     access_token_expire_time: datetime
+    session_uuid: str
 
 
 @dataclasses.dataclass
 class RefreshToken:
     refresh_token: str
     refresh_token_expire_time: datetime
+
+
+@dataclasses.dataclass
+class TokenPayload:
+    id: int
+    session_uuid: str
+    expire_time: datetime
+
+
+@dataclasses.dataclass
+class UploadUrl:
+    url: str
